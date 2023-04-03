@@ -13,7 +13,7 @@ function App() {
   const center = [47.390387412304094, 2.3483664012334238];
 
   return (
-    <MapContainer center={center} zoom={6} scrollWheelZoom={false}>
+    <MapContainer center={center} zoom={6}>
       <LayersControl position="topright">
         <LayersControl.BaseLayer checked name="IGN topo">
           <LayerGroup>
