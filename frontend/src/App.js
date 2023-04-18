@@ -1,22 +1,46 @@
-import React, { useEffect } from "react";
+import React, { Component } from 'react';
+import {View, Map } from 'ol';
 
-/*import {
-  MapContainer,
-  WMSTileLayer,
-  TileLayer,
-  LayersControl,
-  LayerGroup,
-} from "react-leaflet";*/
-import MapWrapper from "./component/MapWrapper";
+import {Services, olExtended} from 'geoportal-extensions-openlayers';
 
-function App() {
-  useEffect(() => {}, []);
-  //const center = [47.390387412304094, 2.3483664012334238];
+import '../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css';
+import '../node_modules/ol/ol.css';
 
-  return (
+class App extends Component {
+    render() {
 
-    <MapWrapper/>
-  );
+          var createMap = function() {
+              var map = new Map({
+                  target : "map",
+                  layers : [
+                      new olExtended.layer.GeoportalWMTS({
+                          layer : "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2"
+                      })
+                  ],
+                  view : new View({
+                      center : [288074.8449901076, 6247982.515792289],
+                      zoom : 6
+                  })
+              });
+
+                var search = new olExtended.control.SearchEngine({});
+                map.addControl(search);
+                
+
+                var attributions = new olExtended.control.GeoportalAttribution();
+                map.addControl(attributions);
+        }
+
+        Services.getConfig({
+            apiKey : "essentiels",
+            onSuccess : createMap
+         });
+
+        return (
+
+                <div id="map"></div>
+        );
+    }
 }
 
 export default App;
