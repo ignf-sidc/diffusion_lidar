@@ -5,28 +5,19 @@ import Map from 'ol/Map'
 import View from 'ol/View'
 
 function MapWrapper(props) {
-  // set intial state - used to track references to OpenLayers
-  // //  objects for use in hooks, event handlers, etc.
-  // const [ map, setMap ] = useState()
-  // const [ featuresLayer, setFeaturesLayer ] = useState()
-  //const [ selectedCoord , setSelectedCoord ] = useState()
 
   // get ref to div element - OpenLayers will render into this div
   const mapElement = useRef();
 
-  // state and ref setting logic eliminated for brevity
   // initialize map on first render - logic formerly put into componentDidMount
-  useEffect(() => {
-    Services.getConfig({
-      apiKey: "essentiels",
-      onSuccess: go,
-    });
-
-    // create and add vector source layer
-  }, []);
+  Services.getConfig({
+    apiKey: "essentiels",
+    onSuccess: go,
+  });
+  
   function go() {
-    var map = new Map({
-      target: "map",
+    new Map({
+      target: mapElement.current,
       layers: [
         new ol.layer.GeoportalWMTS({
           layer: "ORTHOIMAGERY.ORTHOPHOTOS",
@@ -39,7 +30,7 @@ function MapWrapper(props) {
     });
   }
 
-  return <div ref={mapElement} className="map-container" id="map"></div>;
+  return <div ref={mapElement} className="map-container"></div>;
 }
 
 export default MapWrapper;

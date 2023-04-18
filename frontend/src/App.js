@@ -15,35 +15,7 @@ function App() {
 
   return (
 
-    <MapWrapper></MapWrapper>
-    
-    // <MapContainer center={center} zoom={6}>
-    //   <LayersControl position="topright">
-    //     <LayersControl.BaseLayer checked name="IGN topo">
-    //       <LayerGroup>
-    //         <WMSTileLayer
-    //           url="https://wxs.ign.fr/essentiels/geoportail/r/wms?'"
-    //           params={{
-    //             layers: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
-    //             continuousWorld: true,
-    //           }}
-    //         />
-    //       </LayerGroup>
-    //     </LayersControl.BaseLayer>
-    //     <LayersControl.BaseLayer name="Satellites">
-    //       <LayerGroup>
-    //         <WMSTileLayer
-    //           url='https://wxs.ign.fr/essentiels/geoportail/r/wms?'
-    //           params={{
-    //             layers: 'ORTHOIMAGERY.ORTHOPHOTOS',
-    //             continuousWorld: true,
-    //           }}
-              
-    //         />
-    //       </LayerGroup>
-    //     </LayersControl.BaseLayer>
-    //   </LayersControl>
-    // </MapContainer>
+    <MapWrapper/>
   );
 }
 
