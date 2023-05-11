@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import {View, Map } from 'ol';
+import axios from 'axios';
 
 import {Services, olExtended} from 'geoportal-extensions-openlayers';
 
@@ -7,6 +8,15 @@ import '../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.
 import '../node_modules/ol/ol.css';
 
 class App extends Component {
+    componentDidMount() {
+        axios.get(`http://${process.env.REACT_APP_HOST_API}:8000/hello_world`)
+          .then(response => {
+            console.log(response.data);
+          })
+          .catch(error => {
+            console.error(error);
+          });
+      }
     render() {
 
           var createMap = function() {

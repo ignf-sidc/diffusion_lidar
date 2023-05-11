@@ -34,6 +34,7 @@ services:
     environment:
       - HTTP_PROXY=${HTTP_PROXY}
       - HTTPS_PROXY=${HTTPS_PROXY}
+      # - HOST_NAME=${HOST_NAME}
       - CHOKIDAR_USEPOLLING=true
     networks:
      - api
