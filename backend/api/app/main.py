@@ -8,8 +8,8 @@ import os
 load_dotenv()
 
 origins = [
-    f"http://{ os.environ.get('HOST')}:3000",
-    f"{ os.environ.get('HOST')}:3000",
+    f"http://{ os.environ.get('REACT_APP_HOST_API')}:3000",
+    f"{ os.environ.get('REACT_APP_HOST_API')}:3000",
     "http://frontend:3000",
     "frontend:3000"
 ]
