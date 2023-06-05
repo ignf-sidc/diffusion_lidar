@@ -12,7 +12,24 @@ code {
     monospace;
 }
 
-.leaflet-container {
-  width: 100wh; 
+#map{
+  width: 200vh; 
   height: 100vh;
 }
+
+.ol-popup {
+  position: absolute;
+  background-color: white;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  font-size: 14px;
+  color: #333;
+  transform: translate(-50%, -150%); /* Centrer l'infobulle par rapport au polygone */
+  white-space: nowrap; /* Empêche le texte de se retourner à la ligne */
+  z-index: 1; /* Assurez-vous que l'infobulle est affichée au-dessus des autres éléments */
+}
+
+
+
+

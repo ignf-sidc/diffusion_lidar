@@ -1,13 +1,13 @@
 FROM node:latest
 
-WORKDIR /app
+WORKDIR /usr/app
 
-COPY package.json /app/
+COPY package.json .
 
 RUN npm install
 
 EXPOSE 3000
 
-COPY . /app/
+COPY . .
 
 CMD ["npm", "start"]
