@@ -9,6 +9,8 @@ services:
       args:    
         - http_proxy
         - https_proxy
+    env_file:
+      - .env
     environment:
       - HTTP_PROXY=${HTTP_PROXY}
       - HTTPS_PROXY=${HTTPS_PROXY}
@@ -31,9 +33,12 @@ services:
       - '/frontend/node_modules'
     ports:
       - 3000:3000
+    env_file:
+      - .env
     environment:
       - HTTP_PROXY=${HTTP_PROXY}
       - HTTPS_PROXY=${HTTPS_PROXY}
+      # - HOST_NAME=${HOST_NAME}
       - CHOKIDAR_USEPOLLING=true
     networks:
      - api
