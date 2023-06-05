@@ -1,4 +1,5 @@
 import os
+
 # pylint: disable=import-error
 from fastapi import FastAPI
 
