@@ -8,6 +8,7 @@ import VectorSource from 'ol/source/Vector';
 import { Style, Fill, Stroke } from 'ol/style';
 import { transform } from 'ol/proj';
 import { Select } from 'ol/interaction';
+import { click } from 'ol/events/condition';
 import LayerSwitcher from 'geoportal-extensions-openlayers/src/OpenLayers/Controls/LayerSwitcher';
 import { Services, olExtended } from 'geoportal-extensions-openlayers';
 import '../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css';
@@ -18,8 +19,12 @@ class App extends Component {
         super(props);
         this.state = {
             coordinate: null,
-            showInfobulle: false
+            showInfobulle: false,
+            selectedFeatures: [],
+            dalles_select: []
         };
+        this.dalles_select = []
+        this.old_dalles_select = null
         this.vectorSource = new VectorSource();
         this.vectorLayer = new VectorLayer({
             source: this.vectorSource,
@@ -33,6 +38,25 @@ class App extends Component {
                 }),
             }),
         });
+        this.style_dalle = {
+            "select" :{
+                fill: new Fill({
+                    color: 'rgba(0, 0, 255, 0.1)',
+                }),
+                stroke: new Stroke({
+                    color: 'yellow',
+                    width: 2,
+                }),
+            }
+        }
+    }
+
+    style_dalle_select(feature) {
+        var index = this.dalles_select.indexOf(feature["values_"]);
+        // si index > 0 c'est que la dalle dans la liste
+        if (index > -1) {
+            feature.setStyle(new Style(this.style_dalle.select))
+        }
     }
 
     componentDidMount() {
@@ -43,9 +67,7 @@ class App extends Component {
             .catch(error => {
                 console.error(error);
             });
-    }
 
-    render() {
         var createMap = () => {
             var map = new Map({
                 target: "map",
@@ -61,7 +83,7 @@ class App extends Component {
                 })
             });
 
-            var search = new olExtended.control.SearchEngine({ zoomTo: 14 });
+            var search = new olExtended.control.SearchEngine({ zoomTo: 12 });
             map.addControl(search);
 
             var layerSwitcher = new olExtended.control.LayerSwitcher({
@@ -72,16 +94,18 @@ class App extends Component {
             var attributions = new olExtended.control.GeoportalAttribution();
             map.addControl(attributions);
 
+
             // Créer une interaction de sélection pour gérer le survol des polygones
             var selectInteraction = new Select({
                 condition: function (event) {
                     return event.type === 'pointermove';
                 },
-                layers: [this.vectorLayer], // Appliquer la sélection uniquement sur la couche vectorielle des polygons
+                layers: [this.vectorLayer],
             });
 
             // évenement au survol d'une salle
-            selectInteraction.on('select', function (event) {
+            selectInteraction.on('select', (event) => {
+                console.log(event);
                 if (event.selected.length > 0) {
                     var selectedFeature = event.selected[0];
                     var coordinate = event.mapBrowserEvent.coordinate;
@@ -90,14 +114,72 @@ class App extends Component {
                     overlay.getElement().innerHTML = 'Coordonnées : ' + coordinate[0] + ', ' + coordinate[1];
                     overlay.setPosition(coordinate);
                     overlay.getElement().style.display = 'block';
-                } else {
-                    // Si aucun polygon n'est survolé, on cache la popup
-                    overlay.getElement().style.display = 'none';
+                    // quand on survole une dalle cliquer on met le style d'une dalle cliquer
+                    this.style_dalle_select(selectedFeature)
                 }
+                // quand on quitte la dalle survolé
+                if (event.deselected.length > 0) {
+                    if (this.old_dalles_select !== null) {
+                        // quand on quitte le survol d'une dalle, on regarde l'index de la dalle dans la liste pour savoir si on a déjà cliquer sur la dalle
+                        if (this.dalles_select.indexOf(this.old_dalles_select["values_"]) > -1){
+                            // on met le style de dalle cliqué
+                            this.style_dalle_select(this.old_dalles_select)
+                        }else{
+                            // si on survol une dalle non cliqué alors on remet le style null
+                            this.old_dalles_select.setStyle(null);
+                        }
+                    }
+                }
+                this.old_dalles_select = selectedFeature
             });
 
+
+            var selectInteractionClick = new Select({
+                condition: function (event) {
+                    return event.type === 'click';
+                },
+                layers: [this.vectorLayer],
+            });
+
+            // évenement au click d'une salle
+            selectInteractionClick.on('select', (event) => {
+                console.log("aaaaaaaaaaaa");
+                if (event.selected.length > 0) {
+                    const featureSelect = event.selected[0];
+                    // on verifie si la dalle est déjà selectionner, si elle est on recupere son index dans la liste
+                    var index = this.dalles_select.indexOf(featureSelect["values_"]);
+                    // si index > 0 c'est que la dalle dans la liste
+                    if (index > -1) {
+                        // au clique sur une dalle déjà selectionner on la supprime
+                        this.dalles_select.splice(index, 1);
+                        featureSelect.setStyle(null);
+                    } else {
+                        // au clique sur une dalle pas selectionner on l'ajoute à la liste
+                        this.dalles_select.push(featureSelect["values_"]);
+                        featureSelect.setStyle(new Style(this.style_dalle.select))
+                    }
+                    overlay.getElement().style.display = 'none';
+                    
+                }
+                // au click d'une dalle, on regarde la dalle qu'on a cliquer juste avant pour lui assigner un style
+                // si la dalle qu'on a cliquer avant est dans la liste des dalles selectionner alors on lui ajoute le style d'une dalle selectionner
+                if (event.deselected.length > 0) {
+                    const featureDeselect = event.deselected[0];
+                    if (this.dalles_select.indexOf(event.deselected[0]["values_"]) > -1) {
+                        featureDeselect.setStyle(new Style(this.style_dalle.select))
+                    }else{
+                        featureDeselect.setStyle(null);
+                    }
+                    
+                }
+                this.setState({ dalles_select: this.dalles_select });
+            });
+
+
             // Ajout de l'interaction de sélection à la carte
+            map.addInteraction(selectInteractionClick);
             map.addInteraction(selectInteraction);
+            
 
             // Lorsque qu'on se déplace sur la carte
             map.on('moveend', () => {
@@ -106,12 +188,10 @@ class App extends Component {
                 // recupere la bbox de la fenetre de son pc
                 var extent = view.calculateExtent(map.getSize());
 
-                console.log('extent:', extent);
-
                 // Efface les anciens polygones
                 this.vectorSource.clear();
 
-                if (view.getZoom() >= 10) {
+                if (view.getZoom() >= 11) {
                     // Calcule les coordonnées de la bbox
                     var minX = extent[0];
                     var minY = extent[1];
@@ -151,8 +231,17 @@ class App extends Component {
                                 ],
                             ]);
 
+                            var polygonId = 'dalle-' + tileMaxX + '-' + tileMinY;
+
+                            // Vérifiez si le polygone est sélectionné et appliquez le style approprié
+                            // var isSelected = this.state.selectedFeatures.some((feature) => feature.getGeometry().getId() === polygon.getId());
+
+
                             var feature = new Feature({
                                 geometry: polygon,
+                                properties: {
+                                    id: polygonId,
+                                },
                             });
 
                             // Ajoutez des polygons à la couche vecteur
@@ -175,16 +264,38 @@ class App extends Component {
             map.addOverlay(overlay);
         }
 
+
         Services.getConfig({
             apiKey: "essentiels",
             onSuccess: createMap
         });
+    }
 
+    render() {
         return (
             <div>
-                <div id="map"></div>
-                <div id="popup" class="ol-popup">
-                    <div id="popup-content"></div>
+                <div className="map-container">
+                    <div id="map"></div>
+                    <div id="popup" className="ol-popup">
+                        <div id="popup-content"></div>
+                    </div>
+                </div>
+
+                <div className="menu">
+                    <div className="dalle-select">
+                        <h4 className="mt-4">Données classifié Lidar&nbsp;HD</h4>
+                        {this.state.dalles_select.length === 0 ? (
+                            <p>Aucune donnée séléctionnées.</p>
+                        ) : (
+                            <React.Fragment>
+                                <h5>Affichage des dalles sélectionnées</h5>
+                                {this.state.dalles_select.map((item, index) => (
+                                    <p key={index}>{item.properties.id}</p>
+                                ))}
+                            </React.Fragment>
+
+                        )}
+                    </div>
                 </div>
             </div>
         );
