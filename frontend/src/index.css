@@ -56,3 +56,13 @@ code {
   stroke: black; /* Couleur de contour pour la dalle sélectionnée */
   stroke-width: 1px; /* Épaisseur du contour pour la dalle sélectionnée */
 }
+
+.liste_dalle{
+  display: flex;
+  align-items: center;
+  height: 35px;
+}
+
+.liste_dalle p{
+  margin-left: 10px;
+}

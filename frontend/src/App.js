@@ -6,13 +6,12 @@ import Polygon from 'ol/geom/Polygon';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { Style, Fill, Stroke } from 'ol/style';
-import { transform } from 'ol/proj';
 import { Select } from 'ol/interaction';
-import { click } from 'ol/events/condition';
-import LayerSwitcher from 'geoportal-extensions-openlayers/src/OpenLayers/Controls/LayerSwitcher';
 import { Services, olExtended } from 'geoportal-extensions-openlayers';
 import '../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css';
 import '../node_modules/ol/ol.css';
+import { FaTimes } from 'react-icons/fa';
+
 
 class App extends Component {
     constructor(props) {
@@ -41,10 +40,10 @@ class App extends Component {
         this.style_dalle = {
             "select": {
                 fill: new Fill({
-                    color: 'rgba(0, 0, 255, 0.1)',
+                    color: 'rgba(112, 119, 122, 0.5)',
                 }),
                 stroke: new Stroke({
-                    color: 'yellow',
+                    color: 'rgba(112, 119, 122)',
                     width: 2,
                 }),
             }
@@ -52,12 +51,35 @@ class App extends Component {
     }
 
     style_dalle_select(feature) {
-        this.dalles_select.forEach(dalle_select => {
-            if (dalle_select["properties"]["id"] === feature["values_"]["properties"]["id"]) {
+        // fonction permettant d'ajuster le style au survol d'une dalle
+        // on parcout la liste des dalles selectionner
+        for (const dalle_select of this.dalles_select) {
+            // si la dalle est selectionner alors au survol on lui laisse le style select et on retourne true
+            if (dalle_select["values_"]["properties"]["id"] === feature["values_"]["properties"]["id"]) {
                 feature.setStyle(new Style(this.style_dalle.select))
+                return true
+            }
+        };
+        // si la dalle n'est pas dans la liste on retourne false
+        return false
+    }
+
+    remove_dalle_menu = (index, dalle_remove) => {
+        // fonction qui permet de déselectionner une dalle et de remettre son style à jours
+
+        // on parcourt la liste des dalles et non celle des dalles selectionner car quand la carte bouge une nouvelle dalle est creer
+        // et donc il nous faut recuperer la dalle actuel et non l'ancienne qui certes est au meme endroit mais a des propriétés différentes
+        this.vectorSource.getFeatures().forEach((feature) => {
+            // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
+            if (feature.values_.properties.id === dalle_remove.values_.properties.id) {
+                feature.setStyle(null);
             }
         });
-    }
+        // on supprime la dalle de la liste
+        this.dalles_select.splice(index, 1);
+
+        this.setState({ dalles_select: this.dalles_select });   
+    };
 
     componentDidMount() {
         axios.get(`http://${process.env.REACT_APP_HOST_API}:8000/hello_world`)
@@ -119,16 +141,14 @@ class App extends Component {
                 // quand on quitte la dalle survolé
                 if (event.deselected.length > 0) {
                     if (this.old_dalles_select !== null) {
-                        // quand on quitte le survol d'une dalle, on regarde l'index de la dalle dans la liste pour savoir si on a déjà cliquer sur la dalle
-                        if (this.dalles_select.indexOf(this.old_dalles_select["values_"]) > -1) {
-                            // on met le style de dalle cliqué
-                            this.style_dalle_select(this.old_dalles_select)
-                        } else {
+                        var selected = this.style_dalle_select(this.old_dalles_select)
+                        if (!selected){
                             // si on survol une dalle non cliqué alors on remet le style null
                             this.old_dalles_select.setStyle(null);
                         }
                     }
                 }
+                // on stocke la derniere dalle survoler pour modifier le style
                 this.old_dalles_select = selectedFeature
             });
 
@@ -145,31 +165,38 @@ class App extends Component {
                 if (event.selected.length > 0) {
                     const featureSelect = event.selected[0];
 
-                    if(this.dalles_select.length === 0){
+                    if (this.dalles_select.length === 0) {
                         // au clique sur une dalle pas selectionner on l'ajoute à la liste
-                        this.dalles_select.push(featureSelect["values_"]);
+                        
                         featureSelect.setStyle(new Style(this.style_dalle.select))
-                    }else{
+                        this.dalles_select.push(featureSelect);
+                        console.log(featureSelect);
+                    } else {
                         this.dalles_select.forEach((dalle_select, index) => {
-                            if (dalle_select["properties"]["id"] === featureSelect["values_"]["properties"]["id"]) {
+                            if (dalle_select["values_"]["properties"]["id"] === featureSelect["values_"]["properties"]["id"]) {
                                 // au clique sur une dalle déjà selectionner on la supprime
+                                console.log(featureSelect);
                                 this.dalles_select.splice(index, 1);
                                 featureSelect.setStyle(null);
                             } else {
-                                // au clique sur une dalle pas selectionner on l'ajoute à la liste
-                                this.dalles_select.push(featureSelect["values_"]);
-                                featureSelect.setStyle(new Style(this.style_dalle.select))
+                                // on verifie que la dalle n'est pas déjà dans la liste pour eviter des doublons 
+                                if (this.dalles_select.indexOf(featureSelect) == -1) {
+                                    // au clique sur une dalle pas selectionner on l'ajoute à la liste
+                                    featureSelect.setStyle(new Style(this.style_dalle.select))
+                                    this.dalles_select.push(featureSelect);
+                                }
+
                             }
                         });
                     }
-                    
+
                     overlay.getElement().style.display = 'none';
                 }
                 // au click d'une dalle, on regarde la dalle qu'on a cliquer juste avant pour lui assigner un style
                 // si la dalle qu'on a cliquer avant est dans la liste des dalles selectionner alors on lui ajoute le style d'une dalle selectionner
                 if (event.deselected.length > 0) {
                     const featureDeselect = event.deselected[0];
-                    if (this.dalles_select.indexOf(event.deselected[0]["values_"]) > -1) {
+                    if (this.dalles_select.indexOf(event.deselected[0]) > -1) {
                         featureDeselect.setStyle(new Style(this.style_dalle.select))
                     } else {
                         featureDeselect.setStyle(null);
@@ -240,7 +267,8 @@ class App extends Component {
                                     [tileMinX, tileMinY],
                                 ],
                             ]);
-
+                            
+                            // nom de la dalle
                             var polygonId = 'dalle-' + tileMaxX + '-' + tileMinY;
 
                             // Vérifiez si le polygone est sélectionné et appliquez le style approprié
@@ -253,9 +281,9 @@ class App extends Component {
                                     id: polygonId,
                                 },
                             });
-
+                            // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
                             this.dalles_select.forEach(dalle_select => {
-                                if (dalle_select["properties"]["id"] === polygonId) {
+                                if (dalle_select["values_"]["properties"]["id"] === polygonId) {
                                     feature.setStyle(new Style(this.style_dalle.select))
                                 }
                             });
@@ -306,8 +334,12 @@ class App extends Component {
                         ) : (
                             <React.Fragment>
                                 <h5>Affichage des dalles sélectionnées</h5>
+                                <p>Nombre de dalles séléctionnées : {this.state.dalles_select.length}/50</p>
                                 {this.state.dalles_select.map((item, index) => (
-                                    <p key={index}>{item.properties.id}</p>
+                                    <div className="liste_dalle" key={index}>
+                                        <button onClick={() => this.remove_dalle_menu(index, item)}><FaTimes style={{ color: 'red' }}/></button>
+                                        <p>{item.values_.properties.id}</p>
+                                    </div>
                                 ))}
                             </React.Fragment>
 
