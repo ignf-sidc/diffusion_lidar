@@ -8,7 +8,7 @@ import VectorSource from 'ol/source/Vector';
 import { Style, Fill, Stroke } from 'ol/style';
 import { transform } from 'ol/proj';
 import { Select } from 'ol/interaction';
-
+import LayerSwitcher from 'geoportal-extensions-openlayers/src/OpenLayers/Controls/LayerSwitcher';
 import { Services, olExtended } from 'geoportal-extensions-openlayers';
 import '../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css';
 import '../node_modules/ol/ol.css';
@@ -56,14 +56,19 @@ class App extends Component {
                     this.vectorLayer, // Ajout de la couche qui affichera les polygons
                 ],
                 view: new View({
-                    center : [288074.8449901076, 6247982.515792289],
+                    center: [288074.8449901076, 6247982.515792289],
                     zoom: 6,
                 })
             });
 
-            var search = new olExtended.control.SearchEngine({});
+            var search = new olExtended.control.SearchEngine({ zoomTo: 14 });
             map.addControl(search);
 
+            var layerSwitcher = new olExtended.control.LayerSwitcher({
+                reverse: true,
+                groupSelectStyle: 'group'
+            });
+            map.addControl(layerSwitcher);
             var attributions = new olExtended.control.GeoportalAttribution();
             map.addControl(attributions);
 
@@ -106,7 +111,7 @@ class App extends Component {
                 // Efface les anciens polygones
                 this.vectorSource.clear();
 
-                if (view.getZoom() >= 12) {
+                if (view.getZoom() >= 10) {
                     // Calcule les coordonnées de la bbox
                     var minX = extent[0];
                     var minY = extent[1];
