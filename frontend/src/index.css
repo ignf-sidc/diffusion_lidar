@@ -25,11 +25,44 @@ code {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   font-size: 14px;
   color: #333;
-  transform: translate(-50%, -150%); /* Centrer l'infobulle par rapport au polygone */
-  white-space: nowrap; /* Empêche le texte de se retourner à la ligne */
-  z-index: 1; /* Assurez-vous que l'infobulle est affichée au-dessus des autres éléments */
+  transform: translate(-50%, -150%); 
+  white-space: nowrap; 
+  z-index: 1; 
 }
 
+/* .container {
+  display: grid;
+  grid-template-columns: 80% 20%;
+  min-height: 0;
+} */
 
+.map-container {
+  width: 80%;
+  float: left;
+}
 
+.menu {
+  width: 20%;
+  float: left;
+  height: 100%;
+}
 
+.dalle-select{
+  margin: 25px;
+}
+
+.selected-dalle {
+  fill: rgba(255, 0, 0, 0.1); /* Couleur de remplissage pour la dalle sélectionnée */
+  stroke: black; /* Couleur de contour pour la dalle sélectionnée */
+  stroke-width: 1px; /* Épaisseur du contour pour la dalle sélectionnée */
+}
+
+.liste_dalle{
+  display: flex;
+  align-items: center;
+  height: 35px;
+}
+
+.liste_dalle p{
+  margin-left: 10px;
+}
