@@ -39,7 +39,7 @@ class App extends Component {
             }),
         });
         this.style_dalle = {
-            "select" :{
+            "select": {
                 fill: new Fill({
                     color: 'rgba(0, 0, 255, 0.1)',
                 }),
@@ -52,11 +52,11 @@ class App extends Component {
     }
 
     style_dalle_select(feature) {
-        var index = this.dalles_select.indexOf(feature["values_"]);
-        // si index > 0 c'est que la dalle dans la liste
-        if (index > -1) {
-            feature.setStyle(new Style(this.style_dalle.select))
-        }
+        this.dalles_select.forEach(dalle_select => {
+            if (dalle_select["properties"]["id"] === feature["values_"]["properties"]["id"]) {
+                feature.setStyle(new Style(this.style_dalle.select))
+            }
+        });
     }
 
     componentDidMount() {
@@ -105,13 +105,12 @@ class App extends Component {
 
             // évenement au survol d'une salle
             selectInteraction.on('select', (event) => {
-                console.log(event);
                 if (event.selected.length > 0) {
                     var selectedFeature = event.selected[0];
                     var coordinate = event.mapBrowserEvent.coordinate;
 
                     // Afficher les informations de la dalle dans une fenêtre contextuelle (popup)
-                    overlay.getElement().innerHTML = 'Coordonnées : ' + coordinate[0] + ', ' + coordinate[1];
+                    overlay.getElement().innerHTML = selectedFeature["values_"]["properties"]["id"]
                     overlay.setPosition(coordinate);
                     overlay.getElement().style.display = 'block';
                     // quand on survole une dalle cliquer on met le style d'une dalle cliquer
@@ -121,10 +120,10 @@ class App extends Component {
                 if (event.deselected.length > 0) {
                     if (this.old_dalles_select !== null) {
                         // quand on quitte le survol d'une dalle, on regarde l'index de la dalle dans la liste pour savoir si on a déjà cliquer sur la dalle
-                        if (this.dalles_select.indexOf(this.old_dalles_select["values_"]) > -1){
+                        if (this.dalles_select.indexOf(this.old_dalles_select["values_"]) > -1) {
                             // on met le style de dalle cliqué
                             this.style_dalle_select(this.old_dalles_select)
-                        }else{
+                        } else {
                             // si on survol une dalle non cliqué alors on remet le style null
                             this.old_dalles_select.setStyle(null);
                         }
@@ -143,23 +142,28 @@ class App extends Component {
 
             // évenement au click d'une salle
             selectInteractionClick.on('select', (event) => {
-                console.log("aaaaaaaaaaaa");
                 if (event.selected.length > 0) {
                     const featureSelect = event.selected[0];
-                    // on verifie si la dalle est déjà selectionner, si elle est on recupere son index dans la liste
-                    var index = this.dalles_select.indexOf(featureSelect["values_"]);
-                    // si index > 0 c'est que la dalle dans la liste
-                    if (index > -1) {
-                        // au clique sur une dalle déjà selectionner on la supprime
-                        this.dalles_select.splice(index, 1);
-                        featureSelect.setStyle(null);
-                    } else {
+
+                    if(this.dalles_select.length === 0){
                         // au clique sur une dalle pas selectionner on l'ajoute à la liste
                         this.dalles_select.push(featureSelect["values_"]);
                         featureSelect.setStyle(new Style(this.style_dalle.select))
+                    }else{
+                        this.dalles_select.forEach((dalle_select, index) => {
+                            if (dalle_select["properties"]["id"] === featureSelect["values_"]["properties"]["id"]) {
+                                // au clique sur une dalle déjà selectionner on la supprime
+                                this.dalles_select.splice(index, 1);
+                                featureSelect.setStyle(null);
+                            } else {
+                                // au clique sur une dalle pas selectionner on l'ajoute à la liste
+                                this.dalles_select.push(featureSelect["values_"]);
+                                featureSelect.setStyle(new Style(this.style_dalle.select))
+                            }
+                        });
                     }
-                    overlay.getElement().style.display = 'none';
                     
+                    overlay.getElement().style.display = 'none';
                 }
                 // au click d'une dalle, on regarde la dalle qu'on a cliquer juste avant pour lui assigner un style
                 // si la dalle qu'on a cliquer avant est dans la liste des dalles selectionner alors on lui ajoute le style d'une dalle selectionner
@@ -167,10 +171,10 @@ class App extends Component {
                     const featureDeselect = event.deselected[0];
                     if (this.dalles_select.indexOf(event.deselected[0]["values_"]) > -1) {
                         featureDeselect.setStyle(new Style(this.style_dalle.select))
-                    }else{
+                    } else {
                         featureDeselect.setStyle(null);
                     }
-                    
+
                 }
                 this.setState({ dalles_select: this.dalles_select });
             });
@@ -179,7 +183,7 @@ class App extends Component {
             // Ajout de l'interaction de sélection à la carte
             map.addInteraction(selectInteractionClick);
             map.addInteraction(selectInteraction);
-            
+
 
             // Lorsque qu'on se déplace sur la carte
             map.on('moveend', () => {
@@ -213,6 +217,12 @@ class App extends Component {
                             var tileMaxX = Math.min(tileMinX + tileSize, maxX);
                             var tileMaxY = Math.min(tileMinY + tileSize, maxY);
 
+                            // Arrondir les coordonnées aux nombres ronds
+                            var tileMinX = Math.round(tileMinX / 1000) * 1000;
+                            var tileMinY = Math.round(tileMinY / 1000) * 1000;
+                            var tileMaxX = Math.round(tileMaxX / 1000) * 1000;
+                            var tileMaxY = Math.round(tileMaxY / 1000) * 1000;
+
                             // Ajout d'une marge aux coordonnées des carrés pour garantir une taille cohérente
                             // var margin = 1; // ajustez la valeur de la marge selon vos besoins
                             // tileMinX += margin;
@@ -243,6 +253,13 @@ class App extends Component {
                                     id: polygonId,
                                 },
                             });
+
+                            this.dalles_select.forEach(dalle_select => {
+                                if (dalle_select["properties"]["id"] === polygonId) {
+                                    feature.setStyle(new Style(this.style_dalle.select))
+                                }
+                            });
+
 
                             // Ajoutez des polygons à la couche vecteur
                             this.vectorSource.addFeature(feature);
