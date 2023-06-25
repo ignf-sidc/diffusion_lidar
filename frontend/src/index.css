@@ -66,3 +66,19 @@ code {
 .liste_dalle p{
   margin-left: 10px;
 }
+
+.text_red{
+  color: red;
+}
+
+.map-icon-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.map-icon-button svg {
+  width: 20px;
+  height: 20px;
+}

@@ -10,7 +10,8 @@ import { Select } from 'ol/interaction';
 import { Services, olExtended } from 'geoportal-extensions-openlayers';
 import '../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css';
 import '../node_modules/ol/ol.css';
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes, FaMapMarker } from 'react-icons/fa';
+import { MdDelete } from 'react-icons/md';
 
 
 class App extends Component {
@@ -20,9 +21,12 @@ class App extends Component {
             coordinate: null,
             showInfobulle: false,
             selectedFeatures: [],
-            dalles_select: []
+            dalles_select: [],
+            mapInstance: null
         };
         this.dalles_select = []
+        this.limit_dalle_select = 5
+        this.alert_limit_dalle_state = false
         this.old_dalles_select = null
         this.vectorSource = new VectorSource();
         this.vectorLayer = new VectorLayer({
@@ -46,6 +50,15 @@ class App extends Component {
                     color: 'rgba(112, 119, 122)',
                     width: 2,
                 }),
+            },
+            "alert_limite": {
+                fill: new Fill({
+                    color: "red",
+                }),
+                stroke: new Stroke({
+                    color: 'black',
+                    width: 2,
+                }),
             }
         }
     }
@@ -56,7 +69,12 @@ class App extends Component {
         for (const dalle_select of this.dalles_select) {
             // si la dalle est selectionner alors au survol on lui laisse le style select et on retourne true
             if (dalle_select["values_"]["properties"]["id"] === feature["values_"]["properties"]["id"]) {
-                feature.setStyle(new Style(this.style_dalle.select))
+                if (this.alert_limit_dalle_state === true) {
+                    feature.setStyle(new Style(this.style_dalle.alert_limite))
+                } else {
+                    feature.setStyle(new Style(this.style_dalle.select))
+                }
+
                 return true
             }
         };
@@ -78,8 +96,51 @@ class App extends Component {
         // on supprime la dalle de la liste
         this.dalles_select.splice(index, 1);
 
-        this.setState({ dalles_select: this.dalles_select });   
+        this.setState({ dalles_select: this.dalles_select });
+        this.alert_limit_dalle()
     };
+
+    remove_all_dalle_menu = () => {
+        // fonction lancer pour supprimer toutes les dalles
+        // on parcourt la liste des dalles dans la fenetre pour remettre leur design de base
+        this.vectorSource.getFeatures().forEach((feature) => {
+            // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
+            if (feature.getStyle() !== null) {
+                feature.setStyle(null);
+            }
+        });
+        // on remet la liste des dalles selectionner à 0
+        this.dalles_select = []
+        this.setState({ dalles_select: this.dalles_select });
+    }
+
+    alert_limit_dalle = () => {
+        if (this.dalles_select.length >= this.limit_dalle_select) {
+            this.vectorSource.getFeatures().forEach((feature) => {
+
+                // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
+                if (feature.getStyle() !== null) {
+                    feature.setStyle(new Style(this.style_dalle.alert_limite));
+                }
+            });
+            this.alert_limit_dalle_state = true
+        }
+        else if (this.alert_limit_dalle_state === true && this.dalles_select.length < this.limit_dalle_select) {
+            this.vectorSource.getFeatures().forEach((feature) => {
+                // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
+                if (feature.getStyle() !== null) {
+                    feature.setStyle(new Style(this.style_dalle.select));
+                }
+            });
+            this.alert_limit_dalle_state = false
+        }
+    }
+
+    zoom_to_polygon = (item) => {
+        const polygon_extent = item.values_.geometry.extent_
+        const map = this.state.mapInstance
+        map.getView().fit(polygon_extent, { padding: [50, 50, 50, 50], maxZoom: 12 });
+    }
 
     componentDidMount() {
         axios.get(`http://${process.env.REACT_APP_HOST_API}:8000/hello_world`)
@@ -104,6 +165,9 @@ class App extends Component {
                     zoom: 6,
                 })
             });
+
+            // on stocke la map dans une variable du contructeur, pour pouvoir l'utiliser dans d'autre fonction
+            this.setState({ mapInstance: map });
 
             var search = new olExtended.control.SearchEngine({ zoomTo: 12 });
             map.addControl(search);
@@ -142,7 +206,7 @@ class App extends Component {
                 if (event.deselected.length > 0) {
                     if (this.old_dalles_select !== null) {
                         var selected = this.style_dalle_select(this.old_dalles_select)
-                        if (!selected){
+                        if (!selected) {
                             // si on survol une dalle non cliqué alors on remet le style null
                             this.old_dalles_select.setStyle(null);
                         }
@@ -164,30 +228,30 @@ class App extends Component {
             selectInteractionClick.on('select', (event) => {
                 if (event.selected.length > 0) {
                     const featureSelect = event.selected[0];
+                    // variable qui va valider si la dalle est dans liste sur laquelle on boucle 
+                    var newSelect = false
 
                     if (this.dalles_select.length === 0) {
                         // au clique sur une dalle pas selectionner on l'ajoute à la liste
-                        
+
                         featureSelect.setStyle(new Style(this.style_dalle.select))
                         this.dalles_select.push(featureSelect);
-                        console.log(featureSelect);
                     } else {
                         this.dalles_select.forEach((dalle_select, index) => {
                             if (dalle_select["values_"]["properties"]["id"] === featureSelect["values_"]["properties"]["id"]) {
                                 // au clique sur une dalle déjà selectionner on la supprime
-                                console.log(featureSelect);
                                 this.dalles_select.splice(index, 1);
                                 featureSelect.setStyle(null);
-                            } else {
-                                // on verifie que la dalle n'est pas déjà dans la liste pour eviter des doublons 
-                                if (this.dalles_select.indexOf(featureSelect) == -1) {
-                                    // au clique sur une dalle pas selectionner on l'ajoute à la liste
-                                    featureSelect.setStyle(new Style(this.style_dalle.select))
-                                    this.dalles_select.push(featureSelect);
-                                }
-
+                                // on passe la variable à true pour dire qu'on vient de la selectionner
+                                newSelect = true
                             }
                         });
+                        // si la dalle n'est pas à true c'est quelle est dans la liste, donc on la deselectionne
+                        if (!newSelect) {
+                            // au clique sur une dalle pas selectionner on l'ajoute à la liste
+                            featureSelect.setStyle(new Style(this.style_dalle.select))
+                            this.dalles_select.push(featureSelect);
+                        }
                     }
 
                     overlay.getElement().style.display = 'none';
@@ -204,6 +268,7 @@ class App extends Component {
 
                 }
                 this.setState({ dalles_select: this.dalles_select });
+                this.alert_limit_dalle()
             });
 
 
@@ -267,7 +332,7 @@ class App extends Component {
                                     [tileMinX, tileMinY],
                                 ],
                             ]);
-                            
+
                             // nom de la dalle
                             var polygonId = 'dalle-' + tileMaxX + '-' + tileMinY;
 
@@ -284,7 +349,12 @@ class App extends Component {
                             // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
                             this.dalles_select.forEach(dalle_select => {
                                 if (dalle_select["values_"]["properties"]["id"] === polygonId) {
-                                    feature.setStyle(new Style(this.style_dalle.select))
+                                    if (this.alert_limit_dalle_state === true) {
+                                        feature.setStyle(new Style(this.style_dalle.alert_limite))
+                                    } else {
+                                        feature.setStyle(new Style(this.style_dalle.select))
+                                    }
+
                                 }
                             });
 
@@ -330,14 +400,20 @@ class App extends Component {
                     <div className="dalle-select">
                         <h4 className="mt-4">Données classifié Lidar&nbsp;HD</h4>
                         {this.state.dalles_select.length === 0 ? (
-                            <p>Aucune donnée séléctionnées.</p>
+                            <p>Aucune données séléctionnées.</p>
                         ) : (
                             <React.Fragment>
                                 <h5>Affichage des dalles sélectionnées</h5>
-                                <p>Nombre de dalles séléctionnées : {this.state.dalles_select.length}/50</p>
+                                {this.state.dalles_select.length >= this.limit_dalle_select ? (
+                                    <p className="text_red">Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</p>
+                                ) : (<p>Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</p>)}
+
+                                <button onClick={() => this.remove_all_dalle_menu()}><MdDelete style={{ color: 'red' }} /> Supprimer toutes les dalles </button>
+
                                 {this.state.dalles_select.map((item, index) => (
                                     <div className="liste_dalle" key={index}>
-                                        <button onClick={() => this.remove_dalle_menu(index, item)}><FaTimes style={{ color: 'red' }}/></button>
+                                        <button className='map-icon-button' onClick={() => this.remove_dalle_menu(index, item)}><FaTimes style={{ color: 'red' }} /></button>
+                                        <button className='map-icon-button' onClick={() => this.zoom_to_polygon(item)}><FaMapMarker /></button>
                                         <p>{item.values_.properties.id}</p>
                                     </div>
                                 ))}
