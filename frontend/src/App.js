@@ -6,7 +6,7 @@ import Polygon from 'ol/geom/Polygon';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { Style, Fill, Stroke } from 'ol/style';
-import { Select } from 'ol/interaction';
+import { Select, Draw } from 'ol/interaction';
 import { Services, olExtended } from 'geoportal-extensions-openlayers';
 import '../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css';
 import '../node_modules/ol/ol.css';
@@ -22,15 +22,23 @@ class App extends Component {
             showInfobulle: false,
             selectedFeatures: [],
             dalles_select: [],
-            mapInstance: null
+            polygon_drawn: [],
+            mapInstance: null,
+            selectedMode: 'click',
+            zoom: 5
         };
         this.dalles_select = []
+        this.polygon_drawn = []
         this.limit_dalle_select = 5
         this.alert_limit_dalle_state = false
         this.old_dalles_select = null
-        this.vectorSource = new VectorSource();
+        this.selectInteractionClick = null
+        this.drawPolygon = null
+        this.zoom_dispaly_dalle = 11
+        this.vectorSourceGridDalle = new VectorSource();
+        this.vectorSourceDrawPolygon = new VectorSource();
         this.vectorLayer = new VectorLayer({
-            source: this.vectorSource,
+            source: this.vectorSourceGridDalle,
             style: new Style({
                 fill: new Fill({
                     color: 'rgba(0, 0, 255, 0.1)',
@@ -40,6 +48,9 @@ class App extends Component {
                     width: 0.5,
                 }),
             }),
+        });
+        this.drawnPolygonsLayer = new VectorLayer({
+            source: this.vectorSourceDrawPolygon,
         });
         this.style_dalle = {
             "select": {
@@ -82,12 +93,34 @@ class App extends Component {
         return false
     }
 
+    remove_dalle_in_polygon(polygon) {
+        // fonction qui surpprime toutes les dalles d'un polygon supprimer
+        // liste qui va nous permettre de stocker les dalles qu'on veut supprimer
+        var liste_dalle_remove = []
+        // on boucle sur toutes les dalles selctionner
+        this.dalles_select.forEach(dalle => {
+            // si les dalles appartiennent au polygon alors on les ajouter à la liste liste_dalle_remove
+            if (dalle.values_.properties.polygon === polygon.values_.id) {
+                liste_dalle_remove.push(dalle)
+                // on filtre sur les polygons pour recuperer ceux qui sont dans le polygon et enlever leur style select pour remettre celui de base
+                this.vectorSourceGridDalle.getFeatures().filter((feature) => {
+                    if (feature.values_.properties.id == dalle.values_.properties.id) {
+                        feature.setStyle(null)
+                    }
+                });
+            }
+        });
+        // on récupere la difference entre la liste ou on stocke les dalles qu'on veut supprimer et celle qui contient
+        // toutes les dalles selectionner pour ne recuperer que les dalles en dehors du polygon supprimer
+        this.dalles_select = this.dalles_select.filter((element) => !liste_dalle_remove.includes(element));
+    }
+
     remove_dalle_menu = (index, dalle_remove) => {
         // fonction qui permet de déselectionner une dalle et de remettre son style à jours
 
         // on parcourt la liste des dalles et non celle des dalles selectionner car quand la carte bouge une nouvelle dalle est creer
         // et donc il nous faut recuperer la dalle actuel et non l'ancienne qui certes est au meme endroit mais a des propriétés différentes
-        this.vectorSource.getFeatures().forEach((feature) => {
+        this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
             // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
             if (feature.values_.properties.id === dalle_remove.values_.properties.id) {
                 feature.setStyle(null);
@@ -100,10 +133,30 @@ class App extends Component {
         this.alert_limit_dalle()
     };
 
+    remove_polygon_menu = (polygon_remove) => {
+        // fonction qui permet de supprimer un polygon 
+
+        // on parcourt la liste des polygons et on surppimer le polygon en question du layer
+        this.drawnPolygonsLayer.getSource().getFeatures().forEach((feature) => {
+            // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
+            if (feature.values_.id === polygon_remove.values_.id) {
+                // Supprimer la fonctionnalité du source du layer
+                this.vectorSourceDrawPolygon.removeFeature(feature);
+            }
+            // on lance la fonction qui supprime les dalles du polygons supprimer
+            this.remove_dalle_in_polygon(polygon_remove)
+        });
+
+
+        this.setState({ dalles_select: this.dalles_select });
+        this.setState({ polygon_drawn: this.drawnPolygonsLayer });
+        this.alert_limit_dalle()
+    };
+
     remove_all_dalle_menu = () => {
         // fonction lancer pour supprimer toutes les dalles
         // on parcourt la liste des dalles dans la fenetre pour remettre leur design de base
-        this.vectorSource.getFeatures().forEach((feature) => {
+        this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
             // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
             if (feature.getStyle() !== null) {
                 feature.setStyle(null);
@@ -114,9 +167,25 @@ class App extends Component {
         this.setState({ dalles_select: this.dalles_select });
     }
 
+    remove_all_polygons_menu = () => {
+        // fonction lancer pour supprimer tous les polygons
+        // on parcourt la liste des polygons 
+        this.drawnPolygonsLayer.getSource().getFeatures().forEach((polygon) => {
+            // on lance la fonction qui supprime les dalles du polygons supprimer (donc tous les polygons dans cette fonction)
+            this.remove_dalle_in_polygon(polygon)
+        });
+        // on met la liste des polygons à 0
+        this.drawnPolygonsLayer.getSource().clear();
+
+        this.setState({ dalles_select: this.dalles_select });
+        this.setState({ polygon_drawn: this.drawnPolygonsLayer });
+        this.alert_limit_dalle()
+    }
+
     alert_limit_dalle = () => {
+        // fonction qui permet de colorier ou non en rouge si on dépasse la limit de dalle max
         if (this.dalles_select.length >= this.limit_dalle_select) {
-            this.vectorSource.getFeatures().forEach((feature) => {
+            this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
 
                 // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
                 if (feature.getStyle() !== null) {
@@ -126,7 +195,7 @@ class App extends Component {
             this.alert_limit_dalle_state = true
         }
         else if (this.alert_limit_dalle_state === true && this.dalles_select.length < this.limit_dalle_select) {
-            this.vectorSource.getFeatures().forEach((feature) => {
+            this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
                 // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
                 if (feature.getStyle() !== null) {
                     feature.setStyle(new Style(this.style_dalle.select));
@@ -141,6 +210,23 @@ class App extends Component {
         const map = this.state.mapInstance
         map.getView().fit(polygon_extent, { padding: [50, 50, 50, 50], maxZoom: 12 });
     }
+
+    handleModeChange = (mode) => {
+        this.setState({ selectedMode: mode }, () => {
+            // Cette fonction permet de changer de mode de selection et d'ajouter et supprimer les différentes interactions
+            var map = this.state.mapInstance
+            if (this.state.selectedMode == "polygon") {
+                map.removeInteraction(this.selectInteractionClick)
+                map.addInteraction(this.drawPolygon);
+            } else if (this.state.selectedMode == "rectangle") {
+                map.removeInteraction(this.selectInteractionClick)
+                map.removeInteraction(this.drawPolygon);
+            } else if (this.state.selectedMode == "click") {
+                map.addInteraction(this.selectInteractionClick);
+                map.removeInteraction(this.drawPolygon)
+            }
+        });
+    };
 
     componentDidMount() {
         axios.get(`http://${process.env.REACT_APP_HOST_API}:8000/hello_world`)
@@ -159,6 +245,7 @@ class App extends Component {
                         layer: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2"
                     }),
                     this.vectorLayer, // Ajout de la couche qui affichera les polygons
+                    this.drawnPolygonsLayer // ajout de la couche qui affichera le polygon pour séléectionner des dalles
                 ],
                 view: new View({
                     center: [288074.8449901076, 6247982.515792289],
@@ -217,7 +304,7 @@ class App extends Component {
             });
 
 
-            var selectInteractionClick = new Select({
+            this.selectInteractionClick = new Select({
                 condition: function (event) {
                     return event.type === 'click';
                 },
@@ -225,7 +312,7 @@ class App extends Component {
             });
 
             // évenement au click d'une salle
-            selectInteractionClick.on('select', (event) => {
+            this.selectInteractionClick.on('select', (event) => {
                 if (event.selected.length > 0) {
                     const featureSelect = event.selected[0];
                     // variable qui va valider si la dalle est dans liste sur laquelle on boucle 
@@ -271,9 +358,46 @@ class App extends Component {
                 this.alert_limit_dalle()
             });
 
+            // Créer une interaction de tracé de polygon
+            this.drawPolygon = new Draw({
+                type: 'Polygon',
+            });
+
+            // FAIRE UN TRUC POUR QUE SI ON TRACE UN POLYGON SUR DES DALLES DEJA SELECTIONNER QUE CA LES RESELECTIONNE PAS
+            this.drawPolygon.on('drawend', (event) => {
+                var feature = event.feature
+                // on ajoute l'id du polygon avec ces coordonnées
+                var id = `polygon-${feature.getGeometry().getExtent().map(point => Math.round(point / 1000)).join('-')}`
+                feature.setProperties({
+                    id: id
+                });
+
+                // on ajoute le polygon à la liste des polygons
+                this.drawnPolygonsLayer.getSource().addFeature(feature);
+
+                // Récupérer le polygone dessiné
+                const polygon = feature.getGeometry();
+                // On parcourt les polygones de la grille et on recupere les dalles dans ce polygon pour les selectionner
+                this.vectorSourceGridDalle.getFeatures().forEach((dalle) => {
+                    if (polygon.intersectsExtent(dalle.values_.geometry.extent_)) {
+                        // si un polygon est tracé sur des dalles déjà cliquer on ne les rajoute pas 
+                        if(this.dalles_select.every(feature => feature.values_.properties.id !== dalle.values_.properties.id)){
+                            dalle.values_.properties.polygon = id
+                            this.dalles_select.push(dalle);
+                            dalle.setStyle(new Style(this.style_dalle.select))
+                        }
+                    }
+                });
+
+
+                this.setState({ dalles_select: this.dalles_select });
+                this.setState({ polygon_drawn: this.drawnPolygonsLayer });
+                this.alert_limit_dalle()
+            });
+
 
             // Ajout de l'interaction de sélection à la carte
-            map.addInteraction(selectInteractionClick);
+            map.addInteraction(this.selectInteractionClick);
             map.addInteraction(selectInteraction);
 
 
@@ -281,13 +405,14 @@ class App extends Component {
             map.on('moveend', () => {
 
                 var view = map.getView();
+                this.setState({ zoom: view.getZoom() });
                 // recupere la bbox de la fenetre de son pc
                 var extent = view.calculateExtent(map.getSize());
 
                 // Efface les anciens polygones
-                this.vectorSource.clear();
+                this.vectorSourceGridDalle.clear();
 
-                if (view.getZoom() >= 11) {
+                if (view.getZoom() >= this.zoom_dispaly_dalle) {
                     // Calcule les coordonnées de la bbox
                     var minX = extent[0];
                     var minY = extent[1];
@@ -360,7 +485,7 @@ class App extends Component {
 
 
                             // Ajoutez des polygons à la couche vecteur
-                            this.vectorSource.addFeature(feature);
+                            this.vectorSourceGridDalle.addFeature(feature);
                         }
                     }
                 }
@@ -397,6 +522,42 @@ class App extends Component {
                 </div>
 
                 <div className="menu">
+                    {this.state.zoom >= this.zoom_dispaly_dalle ? (
+                        <div>
+                            <div>
+                                <label>
+                                    Click
+                                    <input
+                                        type="checkbox"
+                                        checked={this.state.selectedMode === 'click'}
+                                        onChange={() => this.handleModeChange('click')}
+                                    />
+                                </label>
+                            </div>
+                            <div>
+                                <label>
+                                    Polygon
+                                    <input
+                                        type="checkbox"
+                                        checked={this.state.selectedMode === 'polygon'}
+                                        onChange={() => this.handleModeChange('polygon')}
+                                    />
+                                </label>
+                            </div>
+                            <div>
+                                <label>
+                                    Rectangle
+                                    <input
+                                        type="checkbox"
+                                        checked={this.state.selectedMode === 'rectangle'}
+                                        onChange={() => this.handleModeChange('rectangle')}
+                                    />
+                                </label>
+                            </div>
+
+                        </div>
+                    ) : null}
+
                     <div className="dalle-select">
                         <h4 className="mt-4">Données classifié Lidar&nbsp;HD</h4>
                         {this.state.dalles_select.length === 0 ? (
@@ -421,6 +582,28 @@ class App extends Component {
 
                         )}
                     </div>
+
+                    {this.drawnPolygonsLayer.getSource().getFeatures().length !== 0 ? (
+                        <div className="polygon_drawn">
+
+                            <React.Fragment>
+                                <h5>Affichage des polygons tracés</h5>
+                                <p>Nombre de polygons séléctionnées : {this.drawnPolygonsLayer.getSource().getFeatures().length}</p>
+
+                                <button onClick={() => this.remove_all_polygons_menu()}><MdDelete style={{ color: 'red' }} /> Supprimer tous les polygons</button>
+
+                                {this.drawnPolygonsLayer.getSource().getFeatures().map((item, index) => (
+                                    <div className="liste_dalle" key={index}>
+                                        <button className='map-icon-button' onClick={() => this.remove_polygon_menu(item)}><FaTimes style={{ color: 'red' }} /></button>
+                                        <button className='map-icon-button' onClick={() => this.zoom_to_polygon(item)}><FaMapMarker /></button>
+                                        <p>{item.values_.id}</p>
+                                    </div>
+                                ))}
+                            </React.Fragment>
+
+
+                        </div>
+                    ) : null}
                 </div>
             </div>
         );

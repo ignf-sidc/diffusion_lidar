@@ -47,7 +47,7 @@ code {
   height: 100%;
 }
 
-.dalle-select{
+.dalle-select, .polygon_drawn{
   margin: 25px;
 }
 
