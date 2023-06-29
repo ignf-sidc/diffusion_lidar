@@ -60,7 +60,7 @@ jobs:
         id: build-and-push-frontend
         uses: docker/build-push-action@v3
         with:
-          context: ./docker/prod/
+          context: ./docker/prod/frontend/
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -72,8 +72,7 @@ jobs:
         id: build-and-push-api
         uses: docker/build-push-action@v3
         with:
-          context: ./docker/prod/
-          dockerfile: ./docker/prod/dockerfile_api
+          context: ./docker/prod/api/
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

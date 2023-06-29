@@ -6,7 +6,7 @@ services:
     container_name: frontend-prod
     build:
       context: ../../
-      dockerfile: docker/prod/Dockerfile
+      dockerfile: docker/prod/frontend/Dockerfile
       args:    
         - http_proxy
         - https_proxy
@@ -27,7 +27,7 @@ services:
     container_name: api-prod
     build:
       context: "../../"  
-      dockerfile: docker/prod/Dockerfile_api
+      dockerfile: docker/prod/api/Dockerfile_api
       args:    
         - http_proxy
         - https_proxy
