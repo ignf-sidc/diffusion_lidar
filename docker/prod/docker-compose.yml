@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+ 
+  frontend-prod:
+    container_name: frontend-prod
+    build:
+      context: ../../
+      dockerfile: docker/prod/Dockerfile
+      args:    
+        - http_proxy
+        - https_proxy
+    volumes:
+      - '../../frontend:/usr/app/frontend'
+      - '../../frontend/package.json:/usr/app/package.json'
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      # - HOST_NAME=${HOST_NAME}
+      - CHOKIDAR_USEPOLLING=true
+  
+  api-prod:
+    container_name: api-prod
+    build:
+      context: "../../"  
+      dockerfile: docker/prod/Dockerfile_api
+      args:    
+        - http_proxy
+        - https_proxy
+    volumes:
+      - '../../backend/api:/usr/app/api'
+    env_file:
+      - .env
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8000:8000"
