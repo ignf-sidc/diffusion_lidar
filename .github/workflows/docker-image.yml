@@ -60,7 +60,7 @@ jobs:
         id: build-and-push-frontend
         uses: docker/build-push-action@v3
         with:
-          context: ./docker/prod/frontend/
+          context: ./frontend
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -68,13 +68,3 @@ jobs:
           cache-to: type=gha,mode=max
       
 
-      - name: Build and push Docker image api
-        id: build-and-push-api
-        uses: docker/build-push-action@v3
-        with:
-          context: ./docker/prod/api/
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
