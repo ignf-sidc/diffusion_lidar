@@ -51,6 +51,11 @@ code {
   margin: 25px;
 }
 
+.dalle-select-polygon{
+  margin-left: 25px;
+}
+
+
 .selected-dalle {
   fill: rgba(255, 0, 0, 0.1); /* Couleur de remplissage pour la dalle sélectionnée */
   stroke: black; /* Couleur de contour pour la dalle sélectionnée */

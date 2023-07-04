@@ -12,6 +12,7 @@ import '../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.
 import '../node_modules/ol/ol.css';
 import { FaTimes, FaMapMarker } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
+import { BsChevronDown, BsChevronLeft } from 'react-icons/bs';
 
 
 class App extends Component {
@@ -24,6 +25,7 @@ class App extends Component {
             dalles_select: [],
             polygon_drawn: [],
             mapInstance: null,
+            polygon_select_list_dalle: { "polygon": null, "dalles": [] },
             selectedMode: 'click',
             zoom: 5
         };
@@ -113,11 +115,14 @@ class App extends Component {
         // on récupere la difference entre la liste ou on stocke les dalles qu'on veut supprimer et celle qui contient
         // toutes les dalles selectionner pour ne recuperer que les dalles en dehors du polygon supprimer
         this.dalles_select = this.dalles_select.filter((element) => !liste_dalle_remove.includes(element));
+        console.log(111);
     }
 
-    remove_dalle_menu = (index, dalle_remove) => {
+    remove_dalle_menu = (index, dalle_remove, polygon=null) => {
         // fonction qui permet de déselectionner une dalle et de remettre son style à jours
-
+        if (index === null) {
+            index = this.dalles_select.indexOf(dalle_remove)
+        }
         // on parcourt la liste des dalles et non celle des dalles selectionner car quand la carte bouge une nouvelle dalle est creer
         // et donc il nous faut recuperer la dalle actuel et non l'ancienne qui certes est au meme endroit mais a des propriétés différentes
         this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
@@ -131,6 +136,11 @@ class App extends Component {
 
         this.setState({ dalles_select: this.dalles_select });
         this.alert_limit_dalle()
+        if (polygon != null) {
+            this.list_dalle_in_polygon(polygon, "open")
+        }else{
+            this.setState({ polygon_select_list_dalle: { "polygon": null, "dalles": [] } });
+        }
     };
 
     remove_polygon_menu = (polygon_remove) => {
@@ -209,6 +219,21 @@ class App extends Component {
         const polygon_extent = item.values_.geometry.extent_
         const map = this.state.mapInstance
         map.getView().fit(polygon_extent, { padding: [50, 50, 50, 50], maxZoom: 12 });
+    }
+
+    list_dalle_in_polygon = (polygon, statut) => {
+        if (statut == "open") {
+            var list_dalle_in_polygon = []
+            this.dalles_select.forEach(dalle_select => {
+                if (dalle_select.values_.properties.polygon == polygon.values_.id) {
+                    list_dalle_in_polygon.push(dalle_select)
+                }
+            })
+            this.setState({ polygon_select_list_dalle: { "polygon": polygon, "dalles": list_dalle_in_polygon } })
+        } else {
+            this.setState({ polygon_select_list_dalle: { "polygon": null, "dalles": [] } });
+        }
+
     }
 
     handleModeChange = (mode) => {
@@ -381,7 +406,7 @@ class App extends Component {
                 this.vectorSourceGridDalle.getFeatures().forEach((dalle) => {
                     if (polygon.intersectsExtent(dalle.values_.geometry.extent_)) {
                         // si un polygon est tracé sur des dalles déjà cliquer on ne les rajoute pas 
-                        if(this.dalles_select.every(feature => feature.values_.properties.id !== dalle.values_.properties.id)){
+                        if (this.dalles_select.every(feature => feature.values_.properties.id !== dalle.values_.properties.id)) {
                             dalle.values_.properties.polygon = id
                             this.dalles_select.push(dalle);
                             dalle.setStyle(new Style(this.style_dalle.select))
@@ -592,11 +617,52 @@ class App extends Component {
 
                                 <button onClick={() => this.remove_all_polygons_menu()}><MdDelete style={{ color: 'red' }} /> Supprimer tous les polygons</button>
 
-                                {this.drawnPolygonsLayer.getSource().getFeatures().map((item, index) => (
-                                    <div className="liste_dalle" key={index}>
-                                        <button className='map-icon-button' onClick={() => this.remove_polygon_menu(item)}><FaTimes style={{ color: 'red' }} /></button>
-                                        <button className='map-icon-button' onClick={() => this.zoom_to_polygon(item)}><FaMapMarker /></button>
-                                        <p>{item.values_.id}</p>
+                                {this.drawnPolygonsLayer.getSource().getFeatures().map((polygon, index) => (
+                                    <div>
+                                        <div className="liste_dalle" key={index}>
+                                            <button className='map-icon-button' onClick={() => this.remove_polygon_menu(polygon)}>
+                                                <FaTimes style={{ color: 'red' }} />
+                                            </button>
+                                            <button className='map-icon-button' onClick={() => this.zoom_to_polygon(polygon)}>
+                                                <FaMapMarker />
+                                            </button>
+
+                                            {this.state.polygon_select_list_dalle.polygon !== polygon ? (
+                                                <>
+                                                    <button className='map-icon-button' onClick={() => this.list_dalle_in_polygon(polygon, "open")}>
+                                                        <BsChevronLeft style={{ strokeWidth: '3px' }} />
+                                                    </button>
+                                                    <p>{polygon.values_.id}</p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <button className='map-icon-button' onClick={() => this.list_dalle_in_polygon(polygon, "close")}>
+                                                        <BsChevronDown style={{ strokeWidth: '3px' }} />
+                                                    </button>
+                                                    <p>{polygon.values_.id}</p>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {this.state.polygon_select_list_dalle.polygon === polygon ? (
+                                            <div className="dalle-select-polygon">
+                                                {this.state.polygon_select_list_dalle.dalles.map((dalle, key) => (
+                                                    <div className="liste_dalle" key={key}>
+                                                        <button className='map-icon-button' onClick={() => this.remove_dalle_menu(null, dalle, polygon)}>
+                                                            <FaTimes style={{ color: 'red' }} />
+                                                        </button>
+                                                        <button className='map-icon-button' onClick={() => this.zoom_to_polygon(dalle)}>
+                                                            <FaMapMarker />
+                                                        </button>
+                                                        <p>{dalle.values_.properties.id}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            null
+                                        )}
+
+
                                     </div>
                                 ))}
                             </React.Fragment>
@@ -604,6 +670,7 @@ class App extends Component {
 
                         </div>
                     ) : null}
+
                 </div>
             </div>
         );
