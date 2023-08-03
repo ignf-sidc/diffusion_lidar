@@ -21,6 +21,7 @@
     ]
   },
   "dependencies": {
+    "antd": "^5.8.1",
     "axios": "^1.4.0",
     "geoportal-extensions-openlayers": "^3.2.21",
     "ol": "^6.15.1",
