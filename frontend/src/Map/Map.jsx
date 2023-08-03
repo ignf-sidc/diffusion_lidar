@@ -5,26 +5,38 @@ import VectorSource from "ol/source/Vector";
 import "../../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css";
 import "../../node_modules/ol/ol.css";
 import { MapController } from "./MapController";
-import { Services } from "geoportal-extensions-openlayers";
-import { Geometry } from "ol/geom";
-import { Options } from "ol/layer/BaseVector";
+import { Style, Fill, Stroke } from 'ol/style';
+
 
 
 class Map extends Component{
 
-  constructor(vectorLayerDescribe) {
-    super(vectorLayerDescribe);
+  constructor() {
+    super()
     this.vectorSourceGridDalle = new VectorSource();
     this.vectorSourceDrawPolygon = new VectorSource();
-    this.vectorLayer = new VectorLayer(vectorLayerDescribe.vectorLayerDescribe);
+    this.vectorLayer = new VectorLayer({
+      source: this.vectorSourceGridDalle,
+      style: new Style({
+        fill: new Fill({
+          color: "rgba(0, 0, 255, 0.1)",
+        }),
+        stroke: new Stroke({
+          color: "black",
+          width: 0.5,
+        }),
+      }),
+    });
     this.drawnPolygonsLayer = new VectorLayer({
       source: this.vectorSourceDrawPolygon,
     });
     this.state = {
       mapInstance: null,
       zoom: 5,
+      zoom_display_dalle: 11,
+      tileSize : 1000
     };
-    this.MapController = new MapController(this.state,this.vectorLayer, this.drawnPolygonsLayer);
+    this.MapController = new MapController(this.state,this.vectorLayer, this.drawnPolygonsLayer,this.vectorSourceGridDalle);
   }
   
   render() {
