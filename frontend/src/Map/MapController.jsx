@@ -1,38 +1,25 @@
 import * as React from "react";
 import { Component } from "react";
 import { View, Map } from "ol";
-import Feature from 'ol/Feature';
-import Polygon from 'ol/geom/Polygon';
+import Feature from "ol/Feature";
+import Polygon from "ol/geom/Polygon";
 import { Services, olExtended } from "geoportal-extensions-openlayers";
 import "../../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css";
 import "../../node_modules/ol/ol.css";
+import eventSelect from "../component/EventDalle";
 
 export class MapController extends Component {
-
-  constructor(
-    state,
-    vectorLayer,
-    drawnPolygonsLayer,
-    vectorSourceGridDalle,
-    map
-
-  ) {
+  constructor(state, vectorLayer, drawnPolygonsLayer, vectorSourceGridDalle) {
     super({});
     this.state = state;
     this.vectorLayer = vectorLayer;
     this.drawnPolygonsLayer = drawnPolygonsLayer;
-    this.vectorSourceGridDalle = vectorSourceGridDalle
-    this.map = null
-
+    this.vectorSourceGridDalle = vectorSourceGridDalle;
+    this.map = null;
   }
 
   componentDidMount() {
-
-    const createMap = (
-    ) => {
-
-      
-      
+    const createMap = () => {
       this.map = new Map({
         target: "map",
         layers: [
@@ -50,7 +37,7 @@ export class MapController extends Component {
       this.setState({ mapInstance: map });
       var search = new olExtended.control.SearchEngine({ zoomTo: 12 });
       this.map.addControl(search);
-  
+
       const layerSwitcher = new olExtended.control.LayerSwitcher({
         reverse: true,
         groupSelectStyle: "group",
@@ -58,10 +45,14 @@ export class MapController extends Component {
       this.map.addControl(layerSwitcher);
       const attributions = new olExtended.control.GeoportalAttribution();
       this.map.addControl(attributions);
-      this.map.on('moveend', () => {this.mooveMap()})
+      this.map.on("moveend", () => {
+        this.mooveMap();
+      });
+
+      const selectInteraction = eventSelect("pointermove", this.vectorLayer)
+      this.map.addInteraction(selectInteraction);
     };
 
-    
     Services.getConfig({
       apiKey: "essentiels",
       onSuccess: createMap,
@@ -69,8 +60,7 @@ export class MapController extends Component {
   }
 
   // Lorsque qu'on se déplace sur la carte
-  mooveMap=()=>{
-
+  mooveMap = () => {
     const view = this.map.getView();
     this.setState({ zoom: view.getZoom() });
 
@@ -81,70 +71,68 @@ export class MapController extends Component {
     this.vectorSourceGridDalle.clear();
 
     if (view.getZoom() >= this.state.zoom_display_dalle) {
-        // Calcule les coordonnées de la bbox
-        const minX = extent[0];
-        const minY = extent[1];
-        const maxX = extent[2];
-        const maxY = extent[3];
+      // Calcule les coordonnées de la bbox
+      const minX = extent[0];
+      const minY = extent[1];
+      const maxX = extent[2];
+      const maxY = extent[3];
 
+      // Calcule le nombre de dalles nécessaires en X et en Y
+      const numTilesX = Math.ceil((maxX - minX) / this.state.tileSize);
+      const numTilesY = Math.ceil((maxY - minY) / this.state.tileSize);
 
-        // Calcule le nombre de dalles nécessaires en X et en Y
-        const numTilesX = Math.ceil((maxX - minX) / this.state.tileSize);
-        const numTilesY = Math.ceil((maxY - minY) / this.state.tileSize);
+      // Parcour sur les dalles et ajout de leurs coordonnées
+      for (let i = 0; i < numTilesX; i++) {
+        for (let j = 0; j < numTilesY; j++) {
+          let tileMinX = minX + i * this.state.tileSize;
+          let tileMinY = minY + j * this.state.tileSize;
+          let tileMaxX = Math.min(tileMinX + this.state.tileSize, maxX);
+          let tileMaxY = Math.min(tileMinY + this.state.tileSize, maxY);
 
-        // Parcour sur les dalles et ajout de leurs coordonnées
-        for (let i = 0; i < numTilesX; i++) {
-            for (let j = 0; j < numTilesY; j++) {
-                let tileMinX = minX + i * this.state.tileSize;
-                let tileMinY = minY + j * this.state.tileSize;
-                let tileMaxX = Math.min(tileMinX + this.state.tileSize, maxX);
-                let tileMaxY = Math.min(tileMinY + this.state.tileSize, maxY);
+          // Arrondir les coordonnées aux nombres ronds
+          tileMinX = Math.round(tileMinX / 1000) * 1000;
+          tileMinY = Math.round(tileMinY / 1000) * 1000;
+          tileMaxX = Math.round(tileMaxX / 1000) * 1000;
+          tileMaxY = Math.round(tileMaxY / 1000) * 1000;
 
-                // Arrondir les coordonnées aux nombres ronds
-                tileMinX = Math.round(tileMinX / 1000) * 1000;
-                tileMinY = Math.round(tileMinY / 1000) * 1000;
-                tileMaxX = Math.round(tileMaxX / 1000) * 1000;
-                tileMaxY = Math.round(tileMaxY / 1000) * 1000;
+          // Créatipn du polygon pour la dalle
+          const polygon = new Polygon([
+            [
+              [tileMinX, tileMinY],
+              [tileMaxX, tileMinY],
+              [tileMaxX, tileMaxY],
+              [tileMinX, tileMaxY],
+              [tileMinX, tileMinY],
+            ],
+          ]);
 
-                // Créatipn du polygon pour la dalle
-                const polygon = new Polygon([
-                    [
-                        [tileMinX, tileMinY],
-                        [tileMaxX, tileMinY],
-                        [tileMaxX, tileMaxY],
-                        [tileMinX, tileMaxY],
-                        [tileMinX, tileMinY],
-                    ],
-                ]);
+          // nom de la dalle
+          const polygonId = "dalle-" + tileMaxX + "-" + tileMinY;
 
-                // nom de la dalle
-                const polygonId = 'dalle-' + tileMaxX + '-' + tileMinY;
+          const feature = new Feature({
+            geometry: polygon,
+            properties: {
+              id: polygonId,
+            },
+          });
+          // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
+          // this.dalles_select.forEach(dalle_select => {
+          //     if (dalle_select["values_"]["properties"]["id"] === polygonId) {
+          //         if (this.alert_limit_dalle_state === true) {
+          //             feature.setStyle(new Style(this.style_dalle.alert_limite))
+          //         } else {
+          //             feature.setStyle(new Style(this.style_dalle.select))
+          //         }
 
+          //     }
+          // });
 
-                const feature = new Feature({
-                    geometry: polygon,
-                    properties: {
-                        id: polygonId,
-                    },
-                });
-                // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
-                // this.dalles_select.forEach(dalle_select => {
-                //     if (dalle_select["values_"]["properties"]["id"] === polygonId) {
-                //         if (this.alert_limit_dalle_state === true) {
-                //             feature.setStyle(new Style(this.style_dalle.alert_limite))
-                //         } else {
-                //             feature.setStyle(new Style(this.style_dalle.select))
-                //         }
-
-                //     }
-                // });
-
-
-                // Ajoutez des polygons à la couche vecteur
-                this.vectorSourceGridDalle.addFeature(feature);
-            }
+          // Ajoutez des polygons à la couche vecteur
+          this.vectorSourceGridDalle.addFeature(feature);
         }
+      }
     }
-};
+  };
+
 
 }
