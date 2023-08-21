@@ -1,7 +1,14 @@
-
 import { Select, Draw } from "ol/interaction";
 
-function eventSelect(evenType, vectorLayer) {
+function eventSelect(
+  evenType,
+  vectorLayer,
+  overlay = null,
+  style_dalle = null,
+  old_dalles_select = null,
+  dalles_select = null,
+  alert_limit_dalle_state = null
+) {
   // Créer une interaction de sélection pour gérer le survol des polygones
   const selectInteraction = new Select({
     condition: function (event) {
@@ -12,15 +19,15 @@ function eventSelect(evenType, vectorLayer) {
 
   // évenement au survol d'une salle
   selectInteraction.on("select", (event) => {
-    if (evenType == 'pointermove'){
-        eventSelectSurvol(event)
+    if (evenType == "pointermove") {
+      eventSelectSurvol(event, overlay, style_dalle, old_dalles_select, dalles_select, alert_limit_dalle_state);
     }
   });
 
-  return selectInteraction
+  return selectInteraction;
 }
 
-function eventSelectSurvol(event) {
+function eventSelectSurvol(event, overlay, style_dalle, old_dalles_select, dalles_select, alert_limit_dalle_state) {
   if (event.selected.length > 0) {
     var selectedFeature = event.selected[0];
     var coordinate = event.mapBrowserEvent.coordinate;
@@ -31,20 +38,42 @@ function eventSelectSurvol(event) {
     overlay.setPosition(coordinate);
     overlay.getElement().style.display = "block";
     // quand on survole une dalle cliquer on met le style d'une dalle cliquer
-    this.style_dalle_select(selectedFeature);
+    style_dalle_select(selectedFeature, style_dalle,  dalles_select, alert_limit_dalle_state);
   }
   // quand on quitte la dalle survolé
   if (event.deselected.length > 0) {
-    if (this.old_dalles_select !== null) {
-      var selected = this.style_dalle_select(this.old_dalles_select);
+    if (old_dalles_select !== null) {
+      const selected = style_dalle_select(old_dalles_select, style_dalle, dalles_select, alert_limit_dalle_state);
       if (!selected) {
         // si on survol une dalle non cliqué alors on remet le style null
-        this.old_dalles_select.setStyle(null);
+        old_dalles_select.setStyle(null);
       }
     }
   }
   // on stocke la derniere dalle survoler pour modifier le style
-  this.old_dalles_select = selectedFeature;
+  old_dalles_select = setState({old_dalles_select:selectedFeature});
 }
 
-export default eventSelect
+function style_dalle_select(feature, style_dalle, dalles_select, alert_limit_dalle_state) {
+  // fonction permettant d'ajuster le style au survol d'une dalle
+  // on parcout la liste des dalles selectionner
+  for (const dalle_select of dalles_select) {
+    // si la dalle est selectionner alors au survol on lui laisse le style select et on retourne true
+    if (
+      dalle_select["values_"]["properties"]["id"] ===
+      feature["values_"]["properties"]["id"]
+    ) {
+      if (alert_limit_dalle_state === true) {
+        feature.setStyle(new Style(style_dalle.alert_limite));
+      } else {
+        feature.setStyle(new Style(style_dalle.select));
+      }
+
+      return true;
+    }
+  }
+  // si la dalle n'est pas dans la liste on retourne false
+  return false;
+}
+
+export default eventSelect;

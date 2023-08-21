@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Component } from "react";
-import { View, Map } from "ol";
+import { View, Map, Overlay } from "ol";
 import Feature from "ol/Feature";
 import Polygon from "ol/geom/Polygon";
 import { Services, olExtended } from "geoportal-extensions-openlayers";
@@ -9,13 +9,15 @@ import "../../node_modules/ol/ol.css";
 import eventSelect from "../component/EventDalle";
 
 export class MapController extends Component {
-  constructor(state, vectorLayer, drawnPolygonsLayer, vectorSourceGridDalle) {
+  constructor(state, vectorLayer, drawnPolygonsLayer, vectorSourceGridDalle,style_dalle) {
     super({});
     this.state = state;
     this.vectorLayer = vectorLayer;
     this.drawnPolygonsLayer = drawnPolygonsLayer;
     this.vectorSourceGridDalle = vectorSourceGridDalle;
+    this.style_dalle = style_dalle
     this.map = null;
+
   }
 
   componentDidMount() {
@@ -49,7 +51,28 @@ export class MapController extends Component {
         this.mooveMap();
       });
 
-      const selectInteraction = eventSelect("pointermove", this.vectorLayer)
+      // Créer une couche pour afficher les informations de la dalle survolée
+      const overlay = new Overlay({
+        element: document.getElementById("popup"),
+        autoPan: true,
+        autoPanAnimation: {
+          duration: 250,
+        },
+      });
+
+      // Ajoutez la couche à la carte
+      this.map.addOverlay(overlay);
+
+      const selectInteraction = eventSelect(
+        "pointermove",
+        this.vectorLayer,
+        overlay,
+        this.style_dalle,
+        this.state.old_dalles_select,
+        this.state.dalles_select,
+        this.state.alert_limit_dalle_state
+      );
+      
       this.map.addInteraction(selectInteraction);
     };
 
@@ -116,16 +139,16 @@ export class MapController extends Component {
             },
           });
           // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
-          // this.dalles_select.forEach(dalle_select => {
-          //     if (dalle_select["values_"]["properties"]["id"] === polygonId) {
-          //         if (this.alert_limit_dalle_state === true) {
-          //             feature.setStyle(new Style(this.style_dalle.alert_limite))
-          //         } else {
-          //             feature.setStyle(new Style(this.style_dalle.select))
-          //         }
+          this.dalles_select.forEach(dalle_select => {
+              if (dalle_select["values_"]["properties"]["id"] === polygonId) {
+                  if (this.alert_limit_dalle_state === true) {
+                      feature.setStyle(new Style(this.style_dalle.alert_limite))
+                  } else {
+                      feature.setStyle(new Style(this.style_dalle.select))
+                  }
 
-          //     }
-          // });
+              }
+          });
 
           // Ajoutez des polygons à la couche vecteur
           this.vectorSourceGridDalle.addFeature(feature);
@@ -133,6 +156,4 @@ export class MapController extends Component {
       }
     }
   };
-
-
 }

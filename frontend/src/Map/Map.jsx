@@ -5,14 +5,12 @@ import VectorSource from "ol/source/Vector";
 import "../../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css";
 import "../../node_modules/ol/ol.css";
 import { MapController } from "./MapController";
-import { Style, Fill, Stroke } from 'ol/style';
+import { Style, Fill, Stroke } from "ol/style";
 
-
-
-class Map extends Component{
-
-  constructor() {
-    super()
+class Map extends Component {
+  constructor(style_dalle) {
+    super();
+    this.style_dalle = style_dalle
     this.vectorSourceGridDalle = new VectorSource();
     this.vectorSourceDrawPolygon = new VectorSource();
     this.vectorLayer = new VectorLayer({
@@ -34,17 +32,29 @@ class Map extends Component{
       mapInstance: null,
       zoom: 5,
       zoom_display_dalle: 11,
-      tileSize : 1000
+      tileSize: 1000,
+      old_dalles_select: null,
+      dalles_select: [],
+      alert_limit_dalle_state: false
     };
-    this.MapController = new MapController(this.state,this.vectorLayer, this.drawnPolygonsLayer,this.vectorSourceGridDalle);
+    this.MapController = new MapController(
+      this.state,
+      this.vectorLayer,
+      this.drawnPolygonsLayer,
+      this.vectorSourceGridDalle,
+      this.style_dalle
+    );
   }
-  
+
   render() {
-    this.MapController.componentDidMount()
+    this.MapController.componentDidMount();
     return (
       <>
         <div className="map-container">
           <div id="map"></div>
+          <div id="popup" className="ol-popup">
+            <div id="popup-content"></div>
+          </div>
         </div>
       </>
     );
