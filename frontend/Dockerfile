@@ -6,8 +6,14 @@ COPY package.json .
 
 RUN npm install
 
-EXPOSE 3000
-
 COPY . .
 
-CMD ["npm", "start"]
+RUN npm run build
+
+EXPOSE 3000
+
+
+
+ENV NODE_ENV=production
+
+CMD ["sh", "-c", "npm start"]
