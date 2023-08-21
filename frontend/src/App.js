@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Map, Overlay } from 'ol';
+import { View, Map } from 'ol';
 import axios from 'axios';
 import Feature from 'ol/Feature';
 import Polygon from 'ol/geom/Polygon';
@@ -27,7 +27,8 @@ class App extends Component {
             mapInstance: null,
             polygon_select_list_dalle: { "polygon": null, "dalles": [] },
             selectedMode: 'click',
-            zoom: 5
+            zoom: 5,
+            coor_mouse: null
         };
         this.dalles_select = []
         this.polygon_drawn = []
@@ -67,6 +68,15 @@ class App extends Component {
             "alert_limite": {
                 fill: new Fill({
                     color: "red",
+                }),
+                stroke: new Stroke({
+                    color: 'black',
+                    width: 2,
+                }),
+            },
+            "pointer_move_dalle_menu": {
+                fill: new Fill({
+                    color: "yellow",
                 }),
                 stroke: new Stroke({
                     color: 'black',
@@ -253,6 +263,30 @@ class App extends Component {
         });
     };
 
+    pointerMoveDalleMenu = (id_dalle) => {
+        // on parcours la liste des dalles
+        this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
+            // son recupere la feature avec la meme id que la dalle survolé dans le menu
+            if (feature.values_.properties.id === id_dalle) {
+                feature.setStyle(new Style(this.style_dalle.pointer_move_dalle_menu))
+            }
+        });
+    }
+
+    quitPointerMoveDalleMenu = (id_dalle) => {
+        // on parcours la liste des dalles
+        this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
+            // son recupere la feature avec la meme id que la dalle survolé dans le menu
+            if (feature.values_.properties.id === id_dalle) {
+                if (this.alert_limit_dalle_state === true) {
+                    feature.setStyle(new Style(this.style_dalle.alert_limite))
+                }else{
+                    feature.setStyle(new Style(this.style_dalle.select))
+                }
+            }
+        });
+    }
+
     componentDidMount() {
         axios.get(`http://${process.env.REACT_APP_HOST_API}:8000/hello_world`)
             .then(response => {
@@ -305,12 +339,6 @@ class App extends Component {
             selectInteraction.on('select', (event) => {
                 if (event.selected.length > 0) {
                     var selectedFeature = event.selected[0];
-                    var coordinate = event.mapBrowserEvent.coordinate;
-
-                    // Afficher les informations de la dalle dans une fenêtre contextuelle (popup)
-                    overlay.getElement().innerHTML = selectedFeature["values_"]["properties"]["id"]
-                    overlay.setPosition(coordinate);
-                    overlay.getElement().style.display = 'block';
                     // quand on survole une dalle cliquer on met le style d'une dalle cliquer
                     this.style_dalle_select(selectedFeature)
                 }
@@ -366,7 +394,6 @@ class App extends Component {
                         }
                     }
 
-                    overlay.getElement().style.display = 'none';
                 }
                 // au click d'une dalle, on regarde la dalle qu'on a cliquer juste avant pour lui assigner un style
                 // si la dalle qu'on a cliquer avant est dans la liste des dalles selectionner alors on lui ajoute le style d'une dalle selectionner
@@ -419,6 +446,14 @@ class App extends Component {
                 this.setState({ polygon_drawn: this.drawnPolygonsLayer });
                 this.alert_limit_dalle()
             });
+
+            const mouseMoveListener = (event) => {
+                const pixel = map.getEventPixel(event.originalEvent);
+                const lonLat = map.getCoordinateFromPixel(pixel);
+                this.setState({ coor_mouse: lonLat });
+              };
+          
+            map.on('pointermove', mouseMoveListener);
 
 
             // Ajout de l'interaction de sélection à la carte
@@ -515,18 +550,6 @@ class App extends Component {
                     }
                 }
             });
-
-            // Créer une couche pour afficher les informations de la dalle survolée
-            var overlay = new Overlay({
-                element: document.getElementById('popup'),
-                autoPan: true,
-                autoPanAnimation: {
-                    duration: 250,
-                },
-            });
-
-            // Ajoutez la couche à la carte
-            map.addOverlay(overlay);
         }
 
 
@@ -547,6 +570,10 @@ class App extends Component {
                 </div>
 
                 <div className="menu">
+                    {this.state.coor_mouse !== null ? (
+                            <p>{Math.round(this.state.coor_mouse[0])} - {Math.round(this.state.coor_mouse[1])}</p>
+                        ) : ( null )}
+                    
                     {this.state.zoom >= this.zoom_dispaly_dalle ? (
                         <div>
                             <div>
@@ -595,14 +622,19 @@ class App extends Component {
                                 ) : (<p>Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</p>)}
 
                                 <button onClick={() => this.remove_all_dalle_menu()}><MdDelete style={{ color: 'red' }} /> Supprimer toutes les dalles </button>
-
+                                <div className="outer-div">
                                 {this.state.dalles_select.map((item, index) => (
-                                    <div className="liste_dalle" key={index}>
+                                    <div className="liste_dalle inner-div" key={index}>
                                         <button className='map-icon-button' onClick={() => this.remove_dalle_menu(index, item)}><FaTimes style={{ color: 'red' }} /></button>
                                         <button className='map-icon-button' onClick={() => this.zoom_to_polygon(item)}><FaMapMarker /></button>
-                                        <p>{item.values_.properties.id}</p>
+                                        <p 
+                                        onMouseEnter={() => this.pointerMoveDalleMenu(item.values_.properties.id)}
+                                        onMouseLeave={() => this.quitPointerMoveDalleMenu(item.values_.properties.id)}
+                                        >
+                                        {item.values_.properties.id}</p>
                                     </div>
                                 ))}
+                                </div>
                             </React.Fragment>
 
                         )}
@@ -616,7 +648,7 @@ class App extends Component {
                                 <p>Nombre de polygons séléctionnées : {this.drawnPolygonsLayer.getSource().getFeatures().length}</p>
 
                                 <button onClick={() => this.remove_all_polygons_menu()}><MdDelete style={{ color: 'red' }} /> Supprimer tous les polygons</button>
-
+                                <div className="outer-div">
                                 {this.drawnPolygonsLayer.getSource().getFeatures().map((polygon, index) => (
                                     <div>
                                         <div className="liste_dalle" key={index}>
@@ -643,6 +675,7 @@ class App extends Component {
                                                 </>
                                             )}
                                         </div>
+                                    
 
                                         {this.state.polygon_select_list_dalle.polygon === polygon ? (
                                             <div className="dalle-select-polygon">
@@ -654,7 +687,10 @@ class App extends Component {
                                                         <button className='map-icon-button' onClick={() => this.zoom_to_polygon(dalle)}>
                                                             <FaMapMarker />
                                                         </button>
-                                                        <p>{dalle.values_.properties.id}</p>
+                                                        <p
+                                                        onMouseEnter={() => this.pointerMoveDalleMenu(dalle.values_.properties.id)}
+                                                        onMouseLeave={() => this.quitPointerMoveDalleMenu(dalle.values_.properties.id)}
+                                                        >{dalle.values_.properties.id}</p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -664,7 +700,9 @@ class App extends Component {
 
 
                                     </div>
+                                    
                                 ))}
+                                </div>
                             </React.Fragment>
 
 
