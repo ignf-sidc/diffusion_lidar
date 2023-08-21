@@ -35,7 +35,8 @@ class Map extends Component {
       tileSize: 1000,
       old_dalles_select: null,
       dalles_select: [],
-      alert_limit_dalle_state: false
+      alert_limit_dalle: false,
+      limit_dalle_select: 5,
     };
     this.MapController = new MapController(
       this.state,

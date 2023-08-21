@@ -1,13 +1,17 @@
 import * as React from "react";
 import { Component } from "react";
-import { View, Map} from "ol";
+import { View, Map } from "ol";
 import { Select, Draw } from "ol/interaction";
 import Feature from "ol/Feature";
 import Polygon from "ol/geom/Polygon";
 import { Services, olExtended } from "geoportal-extensions-openlayers";
 import "../../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css";
 import "../../node_modules/ol/ol.css";
-import eventSelectSurvol from "../component/EventDalle";
+import {
+  eventSelectSurvol,
+  alert_limit_dalle,
+  eventSelectClick,
+} from "../component/EventDalle";
 
 export class MapController extends Component {
   constructor(
@@ -45,7 +49,21 @@ export class MapController extends Component {
             this.style_dalle,
             this.state.old_dalles_select,
             this.state.dalles_select,
-            this.state.alert_limit_dalle_state
+            this.state.alert_limit_dalle
+          )
+        );
+      }
+      if (evenType == "click") {
+        this.setState(
+          eventSelectClick(event, this.state.dalles_select, this.style_dalle)
+        );
+        this.setState(
+          alert_limit_dalle(
+            this.state.dalles_select,
+            this.state.limit_dalle_select,
+            this.vectorSourceGridDalle,
+            this.state.alert_limit_dalle,
+            this.style_dalle
           )
         );
       }
@@ -85,14 +103,11 @@ export class MapController extends Component {
         this.mooveMap();
       });
 
+      const selectInteractionSurvol = this.eventSelect("pointermove");
+      const selectInteractionClick = this.eventSelect("click");
 
-      const selectInteraction = this.eventSelect(
-        "pointermove"
-      );
-
-      console.log(selectInteraction);
-
-      this.map.addInteraction(selectInteraction);
+      this.map.addInteraction(selectInteractionSurvol);
+      this.map.addInteraction(selectInteractionClick);
     };
 
     Services.getConfig({
