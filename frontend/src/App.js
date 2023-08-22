@@ -636,12 +636,11 @@ class App extends Component {
                     ) : null}
 
                     <div className="dalle-select">
-                        <h4 className="mt-4">Données classifié Lidar&nbsp;HD</h4>
+                        <h3 className="mt-4">Nuages de points classés</h3>
                         {this.state.dalles_select.length === 0 ? (
                             <p>Aucune données séléctionnées.</p>
                         ) : (
                             <React.Fragment>
-                                <h5>Affichage des dalles sélectionnées</h5>
                                 {this.state.dalles_select.length >= this.limit_dalle_select ? (
                                     <p className="text_red">Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</p>
                                 ) : (<p>Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</p>)}
@@ -661,10 +660,16 @@ class App extends Component {
                                 ))}
                                 </div>
                             </React.Fragment>
+                            
 
                         )}
+                    
+                    <h3>Produits dérivés</h3>
+                    <p>Pas encore disponible</p>
                     </div>
-
+                    <br/>
+                    <br/>
+                    <br/>
                     {this.drawnPolygonsLayer.getSource().getFeatures().length !== 0 ? (
                         <div className="polygon_drawn">
 
