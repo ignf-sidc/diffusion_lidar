@@ -149,7 +149,7 @@ class App extends Component {
         if (polygon != null) {
             this.list_dalle_in_polygon(polygon, "open")
         }else{
-            this.setState({ polygon_select_list_dalle: { "polygon": null, "dalles": [] } });
+            this.list_dalle_in_polygon(polygon, "close")
         }
     };
 
@@ -232,6 +232,7 @@ class App extends Component {
     }
 
     list_dalle_in_polygon = (polygon, statut) => {
+        // fonction qui permet de lister les dalles 
         if (statut == "open") {
             var list_dalle_in_polygon = []
             this.dalles_select.forEach(dalle_select => {
@@ -239,8 +240,31 @@ class App extends Component {
                     list_dalle_in_polygon.push(dalle_select)
                 }
             })
-            this.setState({ polygon_select_list_dalle: { "polygon": polygon, "dalles": list_dalle_in_polygon } })
+            // on regarde si il y'a des dalles dans le polygon ou l'on peut consulter les dalles, si il n'y en a pu alors on supprime le polygon
+            if (list_dalle_in_polygon.length === 0)  {
+                this.remove_polygon_menu(polygon)
+            // sinon on laisse le polygon ouvert et on affiche les dalles de ce polygon
+            }else{
+                this.setState({ polygon_select_list_dalle: { "polygon": polygon, "dalles": list_dalle_in_polygon } })
+            }
         } else {
+             // on parcourt la liste des polygons 
+            this.drawnPolygonsLayer.getSource().getFeatures().forEach((feature) => {
+                // boolean qui va qu'on va mettre a false si le polygon a 1 dalle dans son emprise
+                let polygonIsEmpty = true
+                // on parcourt la liste des dalles selctionner pour verifier si le polygon à encore au moins 1 dalle dans son emprise
+                this.dalles_select.forEach(dalle_select => {
+                   // si une dalle est dans l'emprise du polygon alors on passe polygonIsEmpty a false
+                    if (dalle_select.values_.properties.polygon === feature.values_.id) {
+                        polygonIsEmpty = false    
+                    }
+                })
+                // si le polygon est a true et n'a donc aucune dalle dans son emprise, alors on supprime le polygon
+                if (polygonIsEmpty) {
+                    // Suppression du polygon qui est vide
+                    this.vectorSourceDrawPolygon.removeFeature(feature);
+                } 
+            });
             this.setState({ polygon_select_list_dalle: { "polygon": null, "dalles": [] } });
         }
 
