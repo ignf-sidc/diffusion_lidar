@@ -8,6 +8,20 @@ import { MapController } from "./MapController";
 import { Style, Fill, Stroke } from "ol/style";
 
 class Map extends Component {
+
+
+  state = {
+    mapInstance: null,
+    zoom: 5,
+    zoom_display_dalle: 11,
+    tileSize: 1000,
+    
+    old_dalles_select: null,
+    dalles_select: [],
+    limit_dalle: false,
+    limit_dalle_select: 5,
+  }
+
   constructor(style_dalle) {
     super();
     this.style_dalle = style_dalle
@@ -28,18 +42,9 @@ class Map extends Component {
     this.drawnPolygonsLayer = new VectorLayer({
       source: this.vectorSourceDrawPolygon,
     });
-    this.state = {
-      mapInstance: null,
-      zoom: 5,
-      zoom_display_dalle: 11,
-      tileSize: 1000,
-      old_dalles_select: null,
-      dalles_select: [],
-      alert_limit_dalle: false,
-      limit_dalle_select: 5,
-    };
     this.MapController = new MapController(
       this.state,
+      this.setState,
       this.vectorLayer,
       this.drawnPolygonsLayer,
       this.vectorSourceGridDalle,

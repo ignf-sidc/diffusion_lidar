@@ -6,7 +6,7 @@ function eventSelectSurvol(
   style_dalle,
   old_dalles_select,
   dalles_select,
-  alert_limit_dalle_state
+  limit_dalle
 ) {
   if (event.selected.length > 0) {
     var selectedFeature = event.selected[0];
@@ -16,7 +16,7 @@ function eventSelectSurvol(
       selectedFeature,
       style_dalle,
       dalles_select,
-      alert_limit_dalle_state
+      limit_dalle
     );
   }
   // quand on quitte la dalle survolé
@@ -26,7 +26,7 @@ function eventSelectSurvol(
         old_dalles_select,
         style_dalle,
         dalles_select,
-        alert_limit_dalle_state
+        limit_dalle
       );
       if (!selected) {
         // si on survol une dalle non cliqué alors on remet le style null
@@ -39,10 +39,13 @@ function eventSelectSurvol(
 }
 
 function eventSelectClick(event, dalles_select, style_dalle) {
+
   if (event.selected.length > 0) {
+
     const featureSelect = event.selected[0];
     // variable qui va valider si la dalle est dans liste sur laquelle on boucle
     var newSelect = false;
+
 
     if (dalles_select.length === 0) {
       // au clique sur une dalle pas selectionner on l'ajoute à la liste
@@ -80,13 +83,12 @@ function eventSelectClick(event, dalles_select, style_dalle) {
       featureDeselect.setStyle(null);
     }
   }
-  console.log(dalles_select);
-  return({ dalles_select: dalles_select });
+  return dalles_select ;
 }
 
 
 
-function alert_limit_dalle (dalles_select,limit_dalle_select,vectorSourceGridDalle,alert_limit_dalle,style_dalle){
+function alert_limit_dalle (style_dalle,vectorSourceGridDalle,limit_dalle,dalles_select,limit_dalle_select){
   // fonction qui permet de colorier ou non en rouge si on dépasse la limit de dalle max
   if (dalles_select.length >= limit_dalle_select) {
       vectorSourceGridDalle.getFeatures().forEach((feature) => {
@@ -96,26 +98,26 @@ function alert_limit_dalle (dalles_select,limit_dalle_select,vectorSourceGridDal
               feature.setStyle(new Style(style_dalle.alert_limite));
           }
       });
-      alert_limit_dalle = true
+      limit_dalle = true
   }
-  else if (alert_limit_dalle === true && dalles_select.length < limit_dalle_select) {
+  else if (limit_dalle === true && dalles_select.length < limit_dalle_select) {
       vectorSourceGridDalle.getFeatures().forEach((feature) => {
           // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
           if (feature.getStyle() !== null) {
               feature.setStyle(new Style(style_dalle.select));
           }
       });
-      alert_limit_dalle = false
+      limit_dalle = false
   }
 
-  return {alert_limit_dalle:alert_limit_dalle}
+  return limit_dalle
 }
 
 function style_dalle_select(
   feature,
   style_dalle,
   dalles_select,
-  alert_limit_dalle_state
+  limit_dalle
 ) {
   // fonction permettant d'ajuster le style au survol d'une dalle
   // on parcout la liste des dalles selectionner
@@ -125,7 +127,7 @@ function style_dalle_select(
       dalle_select["values_"]["properties"]["id"] ===
       feature["values_"]["properties"]["id"]
     ) {
-      if (alert_limit_dalle_state === true) {
+      if (limit_dalle === true) {
         feature.setStyle(new Style(style_dalle.alert_limite));
       } else {
         feature.setStyle(new Style(style_dalle.select));

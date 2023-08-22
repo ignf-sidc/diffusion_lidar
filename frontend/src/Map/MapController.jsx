@@ -12,10 +12,14 @@ import {
   alert_limit_dalle,
   eventSelectClick,
 } from "../component/EventDalle";
+import { Style } from "ol/style";
 
 export class MapController extends Component {
+
+  
   constructor(
     state,
+    setState,
     vectorLayer,
     drawnPolygonsLayer,
     vectorSourceGridDalle,
@@ -23,10 +27,11 @@ export class MapController extends Component {
   ) {
     super({});
     this.state = state;
+    this.setState = setState
     this.vectorLayer = vectorLayer;
     this.drawnPolygonsLayer = drawnPolygonsLayer;
     this.vectorSourceGridDalle = vectorSourceGridDalle;
-    this.style_dalle = style_dalle;
+    this.style_dalle = style_dalle.style_dalle;
     this.map = null;
   }
 
@@ -41,31 +46,32 @@ export class MapController extends Component {
 
     // évenement au survol d'une salle
     selectInteraction.on("select", (event) => {
-      console.log(evenType);
       if (evenType == "pointermove") {
-        this.setState(
           eventSelectSurvol(
             event,
             this.style_dalle,
             this.state.old_dalles_select,
             this.state.dalles_select,
-            this.state.alert_limit_dalle
-          )
+            this.state.limit_dalle
+          
         );
       }
       if (evenType == "click") {
-        this.setState(
-          eventSelectClick(event, this.state.dalles_select, this.style_dalle)
+        eventSelectClick(
+          event,
+          this.state.dalles_select,
+          this.style_dalle
         );
-        this.setState(
-          alert_limit_dalle(
-            this.state.dalles_select,
-            this.state.limit_dalle_select,
-            this.vectorSourceGridDalle,
-            this.state.alert_limit_dalle,
-            this.style_dalle
-          )
+        const limit_dalle = alert_limit_dalle(
+
+          this.style_dalle,
+          this.vectorSourceGridDalle,
+          this.state.limit_dalle,
+          this.state.dalles_select,
+          this.state.limit_dalle_select
         );
+        this.setState({limit_dalle: limit_dalle})
+        console.log();
       }
     });
 
@@ -172,17 +178,17 @@ export class MapController extends Component {
               id: polygonId,
             },
           });
-          // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
-          // this.dalles_select.forEach(dalle_select => {
-          //     if (dalle_select["values_"]["properties"]["id"] === polygonId) {
-          //         if (this.alert_limit_dalle_state === true) {
-          //             feature.setStyle(new Style(this.style_dalle.alert_limite))
-          //         } else {
-          //             feature.setStyle(new Style(this.style_dalle.select))
-          //         }
 
-          //     }
-          // });
+          // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
+          this.state.dalles_select.forEach((dalle_select) => {
+            if (dalle_select["values_"]["properties"]["id"] === polygonId) {
+              if (this.state.limit_dalle === true) {
+                feature.setStyle(new Style(this.style_dalle.alert_limite));
+              } else {
+                feature.setStyle(new Style(this.style_dalle.select));
+              }
+            }
+          });
 
           // Ajoutez des polygons à la couche vecteur
           this.vectorSourceGridDalle.addFeature(feature);
