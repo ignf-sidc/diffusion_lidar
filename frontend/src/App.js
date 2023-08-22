@@ -309,6 +309,7 @@ class App extends Component {
                 view: new View({
                     center: [288074.8449901076, 6247982.515792289],
                     zoom: 6,
+                    maxZoom: 16,
                 })
             });
 
