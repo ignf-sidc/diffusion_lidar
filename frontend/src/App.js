@@ -193,6 +193,9 @@ class App extends Component {
         // on remet la liste des dalles selectionner à 0
         this.dalles_select = []
         this.setState({ dalles_select: this.dalles_select });
+        // il n'y a pu de dalle, les polygons n'ont donc pu de dalle dans leurs emprises, on peut donc les supprimer
+        this.drawnPolygonsLayer.getSource().clear();
+        this.setState({ polygon_drawn: this.drawnPolygonsLayer });
     }
 
     remove_all_polygons_menu = () => {
