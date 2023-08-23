@@ -7,6 +7,7 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { Style, Fill, Stroke } from 'ol/style';
 import { Select, Draw } from 'ol/interaction';
+import {createBox, createRegularPolygon,} from 'ol/interaction/Draw.js';
 import { Services, olExtended } from 'geoportal-extensions-openlayers';
 import '../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css';
 import '../node_modules/ol/ol.css';
@@ -43,6 +44,7 @@ class App extends Component {
         this.old_dalles_select = null
         this.selectInteractionClick = null
         this.drawPolygon = null
+        this.drawRectangle = null
         this.zoom_dispaly_dalle = 11
         this.vectorSourceGridDalle = new VectorSource();
         this.vectorSourceDrawPolygon = new VectorSource();
@@ -283,12 +285,15 @@ class App extends Component {
             if (this.state.selectedMode == "polygon") {
                 map.removeInteraction(this.selectInteractionClick)
                 map.addInteraction(this.drawPolygon);
+                map.removeInteraction(this.drawRectangle);
             } else if (this.state.selectedMode == "rectangle") {
                 map.removeInteraction(this.selectInteractionClick)
                 map.removeInteraction(this.drawPolygon);
+                map.addInteraction(this.drawRectangle);
             } else if (this.state.selectedMode == "click") {
                 map.addInteraction(this.selectInteractionClick);
                 map.removeInteraction(this.drawPolygon)
+                map.removeInteraction(this.drawRectangle);
             }
         });
     };
@@ -315,6 +320,39 @@ class App extends Component {
                 }
             }
         });
+    }
+
+    draw_emprise = (event, type) => {
+        // fonction qui permet de dessiner une emprise avec un polygon ou rectangle
+        // event est l'evenement du dessin
+        // type est soit "rectangle" soit "polygon"
+        var feature = event.feature
+            // on ajoute l'id du polygon avec ces coordonnées
+            var id = `${type}-${feature.getGeometry().getExtent().map(point => Math.round(point / 1000)).join('-')}`
+            feature.setProperties({
+                id: id
+            });
+            // on ajoute le polygon à la liste des polygons
+            this.drawnPolygonsLayer.getSource().addFeature(feature);
+
+            // Récupérer le polygone dessiné
+            const polygon = feature.getGeometry();
+            // On parcourt les polygones de la grille et on recupere les dalles dans ce polygon pour les selectionner
+            this.vectorSourceGridDalle.getFeatures().forEach((dalle) => {
+                if (polygon.intersectsExtent(dalle.values_.geometry.extent_)) {
+                    // si un polygon est tracé sur des dalles déjà cliquer on ne les rajoute pas 
+                    if (this.dalles_select.every(feature => feature.values_.properties.id !== dalle.values_.properties.id)) {
+                        dalle.values_.properties.polygon = id
+                        this.dalles_select.push(dalle);
+                        dalle.setStyle(new Style(this.style_dalle.select))
+                    }
+                }
+            });
+
+
+            this.setState({ dalles_select: this.dalles_select });
+            this.setState({ polygon_drawn: this.drawnPolygonsLayer });
+            this.alert_limit_dalle()
     }
 
     componentDidMount() {
@@ -452,37 +490,20 @@ class App extends Component {
                 type: 'Polygon',
             });
 
-            // FAIRE UN TRUC POUR QUE SI ON TRACE UN POLYGON SUR DES DALLES DEJA SELECTIONNER QUE CA LES RESELECTIONNE PAS
             this.drawPolygon.on('drawend', (event) => {
-                var feature = event.feature
-                // on ajoute l'id du polygon avec ces coordonnées
-                var id = `polygon-${feature.getGeometry().getExtent().map(point => Math.round(point / 1000)).join('-')}`
-                feature.setProperties({
-                    id: id
-                });
-
-                // on ajoute le polygon à la liste des polygons
-                this.drawnPolygonsLayer.getSource().addFeature(feature);
-
-                // Récupérer le polygone dessiné
-                const polygon = feature.getGeometry();
-                // On parcourt les polygones de la grille et on recupere les dalles dans ce polygon pour les selectionner
-                this.vectorSourceGridDalle.getFeatures().forEach((dalle) => {
-                    if (polygon.intersectsExtent(dalle.values_.geometry.extent_)) {
-                        // si un polygon est tracé sur des dalles déjà cliquer on ne les rajoute pas 
-                        if (this.dalles_select.every(feature => feature.values_.properties.id !== dalle.values_.properties.id)) {
-                            dalle.values_.properties.polygon = id
-                            this.dalles_select.push(dalle);
-                            dalle.setStyle(new Style(this.style_dalle.select))
-                        }
-                    }
-                });
-
-
-                this.setState({ dalles_select: this.dalles_select });
-                this.setState({ polygon_drawn: this.drawnPolygonsLayer });
-                this.alert_limit_dalle()
+                this.draw_emprise(event, "polygon")
             });
+
+
+            this.drawRectangle = new Draw({
+                type: 'Circle', 
+                geometryFunction: createBox(), 
+                });
+            
+            this.drawRectangle.on('drawend', (event) => {
+                this.draw_emprise(event, "rectangle");
+            });
+             
 
             const mouseMoveListener = (event) => {
                 const pixel = map.getEventPixel(event.originalEvent);
@@ -492,11 +513,10 @@ class App extends Component {
           
             map.on('pointermove', mouseMoveListener);
 
-
+            
             // Ajout de l'interaction de sélection à la carte
             map.addInteraction(this.selectInteractionClick);
             map.addInteraction(selectInteraction);
-
 
             // Lorsque qu'on se déplace sur la carte
             map.on('moveend', () => {
