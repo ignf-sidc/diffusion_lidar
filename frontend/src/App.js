@@ -614,6 +614,8 @@ class App extends Component {
                             this.vectorSourceGridDalle.addFeature(feature);
                         }
                     }
+                }else{
+                    this.handleModeChange("click")
                 }
             });
         }
