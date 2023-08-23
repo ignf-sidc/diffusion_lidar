@@ -35,7 +35,7 @@ function eventSelectSurvol(
     }
   }
   // on stocke la derniere dalle survoler pour modifier le style
-  return { old_dalles_select: selectedFeature };
+  return selectedDalles;
 }
 
 function eventSelectClick(event, dalles_select, style_dalle) {
