@@ -13,11 +13,13 @@ import '../node_modules/ol/ol.css';
 import { FaTimes, FaMapMarker } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
 import { BsChevronDown, BsChevronLeft } from 'react-icons/bs';
+import { withCookies } from 'react-cookie';
 
 
 class App extends Component {
     constructor(props) {
         super(props);
+        const { cookies } = props;
         this.state = {
             coordinate: null,
             showInfobulle: false,
@@ -28,8 +30,12 @@ class App extends Component {
             polygon_select_list_dalle: { "polygon": null, "dalles": [] },
             selectedMode: 'click',
             zoom: 5,
-            coor_mouse: null
+            coor_mouse: null,
+            expiresDateCookie: null,
+            cookie_zoom_start: cookies.get('zoom') || 6, 
+            cookie_coor_start: cookies.get('coor') || [288074.8449901076, 6247982.515792289]
         };
+        this.day_cookie_expiration = 7
         this.dalles_select = []
         this.polygon_drawn = []
         this.limit_dalle_select = 5
@@ -319,6 +325,12 @@ class App extends Component {
             .catch(error => {
                 console.error(error);
             });
+        
+
+        const expiresDate = new Date();
+        expiresDate.setDate(expiresDate.getDate() + this.day_cookie_expiration)
+        // expiration des cookies
+        this.setState({ expiresDateCookie: expiresDate});
 
         var createMap = () => {
             var map = new Map({
@@ -331,8 +343,8 @@ class App extends Component {
                     this.drawnPolygonsLayer // ajout de la couche qui affichera le polygon pour séléectionner des dalles
                 ],
                 view: new View({
-                    center: [288074.8449901076, 6247982.515792289],
-                    zoom: 6,
+                    center: this.state.cookie_coor_start,
+                    zoom: this.state.cookie_zoom_start,
                     maxZoom: 16,
                 })
             });
@@ -491,6 +503,12 @@ class App extends Component {
 
                 var view = map.getView();
                 this.setState({ zoom: view.getZoom() });
+                // creation du cookie 
+                const { cookies } = this.props;
+                // on set le cookie à chaque fois qu'on zoom
+                cookies.set('zoom', this.state.zoom, { expires: this.state.expiresDateCookie });
+                // on set le cookie avec les coordonnées à chaque fois qu'on bouge sur la carte
+                cookies.set('coor', view.getCenter(), { expires: this.state.expiresDateCookie });
                 // recupere la bbox de la fenetre de son pc
                 var extent = view.calculateExtent(map.getSize());
 
@@ -745,5 +763,5 @@ class App extends Component {
     }
 }
 
-export default App;
+export default withCookies(App);
 
