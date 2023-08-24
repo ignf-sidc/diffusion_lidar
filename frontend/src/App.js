@@ -15,6 +15,7 @@ import { FaTimes, FaMapMarker } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
 import { BsChevronDown, BsChevronLeft } from 'react-icons/bs';
 import { withCookies } from 'react-cookie';
+import { Card, Radio, Space } from 'antd';
 
 
 class App extends Component {
@@ -282,7 +283,7 @@ class App extends Component {
     }
 
     handleModeChange = (mode) => {
-        this.setState({ selectedMode: mode }, () => {
+        this.setState({ selectedMode: mode.target.value }, () => {
             // Cette fonction permet de changer de mode de selection et d'ajouter et supprimer les différentes interactions
             var map = this.state.mapInstance
             if (this.state.selectedMode == "polygon") {
@@ -615,7 +616,7 @@ class App extends Component {
                         }
                     }
                 }else{
-                    this.handleModeChange("click")
+                    this.handleModeChange({"target": {"value": "click"}})
                 }
             });
         }
@@ -639,42 +640,18 @@ class App extends Component {
 
                 <div className="menu">
                     {this.state.coor_mouse !== null ? (
-                            <p>{Math.round(this.state.coor_mouse[0])} - {Math.round(this.state.coor_mouse[1])}</p>
+                        <p className='menu_mode'>{Math.round(this.state.coor_mouse[0])} - {Math.round(this.state.coor_mouse[1])}</p>
                         ) : ( null )}
                     
                     {this.state.zoom >= this.zoom_dispaly_dalle ? (
-                        <div>
-                            <div>
-                                <label>
-                                    Click
-                                    <input
-                                        type="checkbox"
-                                        checked={this.state.selectedMode === 'click'}
-                                        onChange={() => this.handleModeChange('click')}
-                                    />
-                                </label>
-                            </div>
-                            <div>
-                                <label>
-                                    Polygon
-                                    <input
-                                        type="checkbox"
-                                        checked={this.state.selectedMode === 'polygon'}
-                                        onChange={() => this.handleModeChange('polygon')}
-                                    />
-                                </label>
-                            </div>
-                            <div>
-                                <label>
-                                    Rectangle
-                                    <input
-                                        type="checkbox"
-                                        checked={this.state.selectedMode === 'rectangle'}
-                                        onChange={() => this.handleModeChange('rectangle')}
-                                    />
-                                </label>
-                            </div>
-
+                        <div className='menu_mode'>
+                            <Card title="Choix du mode de séléction" >
+                                <Radio.Group onChange={this.handleModeChange} value={this.state.selectedMode}>
+                                    <Radio value={'click'}>Click</Radio>
+                                    <Radio value={'polygon'}>Polygon</Radio>
+                                    <Radio value={'rectangle'}>Rectangle</Radio>
+                                </Radio.Group>
+                            </Card>
                         </div>
                     ) : null}
 

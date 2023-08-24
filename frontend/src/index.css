@@ -47,7 +47,7 @@ code {
   height: 100%;
 }
 
-.dalle-select, .polygon_drawn{
+.dalle-select, .polygon_drawn, .menu_mode{
   margin: 25px;
 }
 
@@ -89,7 +89,7 @@ code {
 }
 
 .outer-div {
-  max-height: 200px; /* Hauteur maximale */
+  max-height: 150px; /* Hauteur maximale */
   overflow: scroll;; /* Masque le contenu dépassant la hauteur maximale */
 }
 
