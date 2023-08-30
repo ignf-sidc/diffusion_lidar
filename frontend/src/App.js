@@ -510,6 +510,7 @@ class App extends Component {
                                 featureSelect.setStyle(null);
                                 // on passe la variable à true pour dire qu'on vient de la selectionner
                                 newSelect = true
+                                this.list_dalle_in_polygon(null, "close")
                             }
                         });
                         // si la dalle n'est pas à true c'est quelle est dans la liste, donc on la deselectionne
