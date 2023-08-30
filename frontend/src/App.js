@@ -15,7 +15,8 @@ import { FaTimes, FaMapMarker } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
 import { BsChevronDown, BsChevronLeft } from 'react-icons/bs';
 import { withCookies } from 'react-cookie';
-import { Card, Radio, Space } from 'antd';
+import { Card, Radio, Space, Button, Upload, message } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 
 
 class App extends Component {
@@ -35,7 +36,8 @@ class App extends Component {
             coor_mouse: null,
             expiresDateCookie: null,
             cookie_zoom_start: cookies.get('zoom') || 6, 
-            cookie_coor_start: cookies.get('coor') || [288074.8449901076, 6247982.515792289]
+            cookie_coor_start: cookies.get('coor') || [288074.8449901076, 6247982.515792289],
+            api_url: null
         };
         this.day_cookie_expiration = 7
         this.dalles_select = []
@@ -49,6 +51,7 @@ class App extends Component {
         this.zoom_dispaly_dalle = 11
         this.vectorSourceGridDalle = new VectorSource();
         this.vectorSourceDrawPolygon = new VectorSource();
+        this.vectorSourceFilePolygon = new VectorSource();
         this.vectorLayer = new VectorLayer({
             source: this.vectorSourceGridDalle,
             style: new Style({
@@ -63,6 +66,9 @@ class App extends Component {
         });
         this.drawnPolygonsLayer = new VectorLayer({
             source: this.vectorSourceDrawPolygon,
+        });
+        this.filePolygonsLayer = new VectorLayer({
+            source: this.vectorSourceFilePolygon,
         });
         this.style_dalle = {
             "select": {
@@ -120,6 +126,8 @@ class App extends Component {
         var liste_dalle_remove = []
         // on boucle sur toutes les dalles selctionner
         this.dalles_select.forEach(dalle => {
+            console.log(dalle.values_.properties.polygon);
+            console.log(polygon.values_.id);
             // si les dalles appartiennent au polygon alors on les ajouter à la liste liste_dalle_remove
             if (dalle.values_.properties.polygon === polygon.values_.id) {
                 liste_dalle_remove.push(dalle)
@@ -134,7 +142,6 @@ class App extends Component {
         // on récupere la difference entre la liste ou on stocke les dalles qu'on veut supprimer et celle qui contient
         // toutes les dalles selectionner pour ne recuperer que les dalles en dehors du polygon supprimer
         this.dalles_select = this.dalles_select.filter((element) => !liste_dalle_remove.includes(element));
-        console.log(111);
     }
 
     remove_dalle_menu = (index, dalle_remove, polygon=null) => {
@@ -326,41 +333,77 @@ class App extends Component {
         });
     }
 
+    getDalleInPolygon = (polygon, id) =>{
+        // On parcourt les polygones de la grille et on recupere les dalles dans ce polygon pour les selectionner
+        this.vectorSourceGridDalle.getFeatures().forEach((dalle) => {
+            if (polygon.intersectsExtent(dalle.values_.geometry.extent_)) {
+                // si un polygon est tracé sur des dalles déjà cliquer on ne les rajoute pas 
+                if (this.dalles_select.every(feature => feature.values_.properties.id !== dalle.values_.properties.id)) {
+                    dalle.values_.properties.polygon = id
+                    this.dalles_select.push(dalle);
+                    dalle.setStyle(new Style(this.style_dalle.select))
+                }
+            }
+        });
+
+        this.setState({ dalles_select: this.dalles_select });
+    }
+
     draw_emprise = (event, type) => {
         // fonction qui permet de dessiner une emprise avec un polygon ou rectangle
         // event est l'evenement du dessin
         // type est soit "rectangle" soit "polygon"
         var feature = event.feature
-            // on ajoute l'id du polygon avec ces coordonnées
-            var id = `${type}-${feature.getGeometry().getExtent().map(point => Math.round(point / 1000)).join('-')}`
-            feature.setProperties({
+        console.log(feature.getGeometry().getExtent());
+        // on ajoute l'id du polygon avec ces coordonnées
+        var id = `${type}-${feature.getGeometry().getExtent().map(point => Math.round(point / 1000)).join('-')}`
+        feature.setProperties({
+            id: id
+        });
+        // on ajoute le polygon à la liste des polygons
+        this.drawnPolygonsLayer.getSource().addFeature(feature);
+
+        // Récupérer le polygone dessiné
+        const polygon = feature.getGeometry();
+        this.getDalleInPolygon(polygon, id)
+        this.setState({ polygon_drawn: this.drawnPolygonsLayer });
+        this.alert_limit_dalle()
+    }
+
+    handleUpload = (info) => {
+        const file = info.file
+        this.handleUploadRemove()
+        if (file.status === 'done') {
+            message.success(`${file.name} file uploaded successfully`);
+            // on convertit nos coordonnées en polygon openlayer
+            const polygonFeature = new Feature({geometry: new Polygon([file.response.polygon_coordinates]),});
+            const id = "file"
+            polygonFeature.setProperties({
                 id: id
             });
-            // on ajoute le polygon à la liste des polygons
-            this.drawnPolygonsLayer.getSource().addFeature(feature);
+            // Ajoutez du polygons à la couche vecteur
+            this.vectorSourceFilePolygon.addFeature(polygonFeature);
+            this.zoom_to_polygon(polygonFeature)
 
-            // Récupérer le polygone dessiné
-            const polygon = feature.getGeometry();
-            // On parcourt les polygones de la grille et on recupere les dalles dans ce polygon pour les selectionner
-            this.vectorSourceGridDalle.getFeatures().forEach((dalle) => {
-                if (polygon.intersectsExtent(dalle.values_.geometry.extent_)) {
-                    // si un polygon est tracé sur des dalles déjà cliquer on ne les rajoute pas 
-                    if (this.dalles_select.every(feature => feature.values_.properties.id !== dalle.values_.properties.id)) {
-                        dalle.values_.properties.polygon = id
-                        this.dalles_select.push(dalle);
-                        dalle.setStyle(new Style(this.style_dalle.select))
-                    }
-                }
-            });
-
-
-            this.setState({ dalles_select: this.dalles_select });
-            this.setState({ polygon_drawn: this.drawnPolygonsLayer });
+            this.getDalleInPolygon(polygonFeature.getGeometry(), id)
             this.alert_limit_dalle()
+
+        } else if (file.status === 'error') {
+            message.error(`${file.name} file upload failed.`);
+        }
+      };
+    
+    handleUploadRemove = (file=null) =>{
+        // fonction appellé lorsqu'on supprime le fichier telecharger
+        const polygon = this.vectorSourceFilePolygon.getFeatures()[0];
+        this.remove_dalle_in_polygon(polygon)
+        this.setState({ dalles_select: this.dalles_select });
+        // Efface les polygones de la couche
+        this.vectorSourceFilePolygon.clear();
     }
 
     componentDidMount() {
-        axios.get(`http://${process.env.REACT_APP_HOST_API}:8000/hello_world`)
+        axios.get(`http://localhost:8000/hello_world`)
             .then(response => {
                 console.log(response.data);
             })
@@ -382,7 +425,8 @@ class App extends Component {
                         layer: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2"
                     }),
                     this.vectorLayer, // Ajout de la couche qui affichera les polygons
-                    this.drawnPolygonsLayer // ajout de la couche qui affichera le polygon pour séléectionner des dalles
+                    this.drawnPolygonsLayer, // ajout de la couche qui affichera le polygon pour séléectionner des dalles
+                    this.filePolygonsLayer // ajout de la couche qui affichera le polygon d'un fichier geojson ou shp
                 ],
                 view: new View({
                     center: this.state.cookie_coor_start,
@@ -391,6 +435,9 @@ class App extends Component {
                 })
             });
 
+            const appProtocol = window.location.protocol; 
+            const appHostname = window.location.hostname; 
+            this.setState({ api_url: `${appProtocol}//${appHostname}` });
             // on stocke la map dans une variable du contructeur, pour pouvoir l'utiliser dans d'autre fonction
             this.setState({ mapInstance: map });
 
@@ -646,11 +693,28 @@ class App extends Component {
                     {this.state.zoom >= this.zoom_dispaly_dalle ? (
                         <div className='menu_mode'>
                             <Card title="Choix du mode de séléction" >
-                                <Radio.Group onChange={this.handleModeChange} value={this.state.selectedMode}>
-                                    <Radio value={'click'}>Click</Radio>
-                                    <Radio value={'polygon'}>Polygon</Radio>
-                                    <Radio value={'rectangle'}>Rectangle</Radio>
-                                </Radio.Group>
+                                <Space direction="vertical" style={{ width: '100%' }} size="large"> 
+                                    <Radio.Group onChange={this.handleModeChange} value={this.state.selectedMode}>
+                                        <Radio value={'click'}>Click</Radio>
+                                        <Radio value={'polygon'}>Polygon</Radio>
+                                        <Radio value={'rectangle'}>Rectangle</Radio>
+                                    </Radio.Group>
+                                        <Upload
+                                        maxCount={1}
+                                        accept=".geojson"
+                                        action={`${this.state.api_url}:8000/upload/geojson`}
+                                        onChange={this.handleUpload}
+                                        onRemove={this.handleUploadRemove}
+                                        >
+                                        <Button icon={<UploadOutlined />}>Upload Geojson</Button>
+                                        </Upload>
+                                        {/* <Upload
+                                        maxCount={5}
+                                        multiple
+                                        >
+                                        <Button icon={<UploadOutlined />}>Upload Shapefile</Button>
+                                        </Upload> */}
+                                </Space>
                             </Card>
                         </div>
                     ) : null}
