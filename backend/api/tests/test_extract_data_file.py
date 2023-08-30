@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 # pylint: disable=import-error
 from fastapi import HTTPException
 from api.app.main import app
-from api.app.ExtractDataFile import ExtractDataFile
+from api.app.adapters.ExtractDataFile import ExtractDataFile
 import pytest
 
 client = TestClient(app)
