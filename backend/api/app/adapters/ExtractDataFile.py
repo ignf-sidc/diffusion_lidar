@@ -21,39 +21,69 @@ class ExtractDataFile:
 
     @staticmethod
     def extract_polygon_coordinates(geojson_data):
-        """permet d'extraire les coordonnées d'un polygon dans un geojson en str
+        """Permet d'extraire les coordonnées d'un polygon ou d'un multipolygon dans un GeoJSON en str.
 
         Args:
-            geojson_data (geojson): fichier geojson
+            geojson_data (str): Fichier GeoJSON au format string.
 
         Raises:
-            HTTPException: renvoie une erreur si lors de l'extraction de l'emprise il y'a une erreur
+            HTTPException: Renvoie une erreur si la géométrie n'est ni un polygon ni un multipolygon.
+            HTTPException: Renvoie une erreur si une erreur se produit lors de l'extraction des coordonnées.
 
         Returns:
-            dict: renvoie les coordoonnées de l'emprise sous cette forme [[x1, y1], [x2,y2]]
+            dict: Renvoie les coordonnées du polygon ou du multipolygon sous forme de liste de listes.
         """
         try:
+            # Charge le GeoJSON depuis la chaîne JSON en un dict
             geojson = json.loads(geojson_data)
+            # Récupére la liste des "features" du GeoJSON
             features = geojson.get("features", [])
 
-            polygons = [
-                shape(feature.get("geometry"))
-                for feature in features
-                if feature.get("geometry").get("type") == "Polygon"
-            ]
+            # Initialise des listes vides pour les polygons et les multipolygons
+            polygons = []
+            multipolygons = []
 
-            if not polygons:
+            for feature in features:
+                # Obtiens le type de géométrie
+                geometry_type = feature.get("geometry").get("type")
+
+                if geometry_type == "Polygon":
+                    # Si c'est un Polygon, convertir la géométrie en objet Shapely
+                    polygons = [
+                        shape(feature.get("geometry"))
+                        for feature in features
+                        if feature.get("geometry").get("type") == "Polygon"
+                    ]
+                elif geometry_type == "MultiPolygon":
+                    # Si c'est un MultiPolygon, convertir la géométrie en objet Shapely MultiPolygon
+                    multipolygons.append(shape(feature.get("geometry")))
+                else:
+                    # Si la géométrie n'est ni un Polygon ni un MultiPolygon, lever une exception
+                    raise HTTPException(
+                        status_code=400,
+                        detail="La géométrie n'est ni un Polygon ni un MultiPolygon",
+                    )
+
+            # Vérifie s'il existe des polygones ou des multipolygones valides
+            if not polygons and not multipolygons:
                 raise HTTPException(
                     status_code=400,
-                    detail="Aucun polygone valide trouvé dans le GeoJSON",
+                    detail="Aucun polygon ou multipolygon valide trouvé dans le GeoJSON",
                 )
 
-            multyPolygon = unary_union(polygons)
-            multyPolygon_geojson = {json.dumps(mapping(multyPolygon))}
-            return multyPolygon_geojson
+            if multipolygons:
+                # Si des multipolygons sont présents, les fusionner en un seul multipolygon
+                merged_multipolygon = unary_union(multipolygons)
+                return json.dumps(mapping(merged_multipolygon))
+
+            if polygons:
+                # Si des polygones sont présents, les fusionner en un seul polygon
+                polygons = unary_union(polygons)
+                polygons_geojson = {json.dumps(mapping(polygons))}
+                return polygons_geojson
 
         except Exception as e:
             raise HTTPException(
                 status_code=500,
-                detail="Erreur lors de la récupération de l'emprise des polygones",
+                detail="Erreur lors de l'extraction des coordonnées des polygones",
             ) from e
