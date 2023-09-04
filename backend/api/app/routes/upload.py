@@ -25,7 +25,7 @@ async def upload_file_geojson(file: UploadFile = File(...)):
         # Traitez le fichier GeoJSON pour extraire les coordonnées du polygone
         geojson_data = await file.read()
         polygon_coordinates = ExtractDataFile.extract_polygon_coordinates(geojson_data)
-        return {"polygon_coordinates": polygon_coordinates}
+        return {"polygon": polygon_coordinates}
     except Exception as e:
         raise HTTPException(
             status_code=500, detail="Erreur lors du traitement du fichier"

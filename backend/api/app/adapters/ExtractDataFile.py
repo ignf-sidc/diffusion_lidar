@@ -3,6 +3,9 @@ import json
 # pylint: disable=import-error
 from fastapi import HTTPException
 
+from shapely.geometry import shape, mapping
+from shapely.ops import unary_union
+
 
 class ExtractDataFile:
     """class qui contient les fonctions pour extraire l'emprise d'un fichier geo
@@ -31,29 +34,26 @@ class ExtractDataFile:
         """
         try:
             geojson = json.loads(geojson_data)
-            geometry_type = geojson["features"][0]["geometry"]["type"]
-            polygon_coordinates = geojson["features"][0]["geometry"]["coordinates"][0]
+            features = geojson.get("features", [])
 
-            if geometry_type != "Polygon":
-                raise HTTPException(
-                    status_code=400, detail="Le type de géométrie doit être un polygon"
-                )
+            polygons = [
+                shape(feature.get("geometry"))
+                for feature in features
+                if feature.get("geometry").get("type") == "Polygon"
+            ]
 
-            # Vérifie si les coordonnées sont valides
-            if not all(
-                isinstance(coord, list) and len(coord) == 2
-                for coord in polygon_coordinates
-            ):
+            if not polygons:
                 raise HTTPException(
                     status_code=400,
-                    detail="Les coordonnées du polygone sont incorrectes",
+                    detail="Aucun polygone valide trouvé dans le GeoJSON",
                 )
 
-            return polygon_coordinates
+            multyPolygon = unary_union(polygons)
+            multyPolygon_geojson = {json.dumps(mapping(multyPolygon))}
+            return multyPolygon_geojson
+
         except Exception as e:
-            # pylint: disable=unexpected-line-ending-format
-            # pylint: disable=missing-final-newline
             raise HTTPException(
                 status_code=500,
-                detail="Erreur lors de l'extraction des coordonnées du polygon",
+                detail="Erreur lors de la récupération de l'emprise des polygones",
             ) from e

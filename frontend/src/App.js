@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { View, Map } from 'ol';
 import axios from 'axios';
 import Feature from 'ol/Feature';
-import Polygon from 'ol/geom/Polygon';
+import { Polygon, MultiPolygon } from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { Style, Fill, Stroke } from 'ol/style';
@@ -126,8 +126,6 @@ class App extends Component {
         var liste_dalle_remove = []
         // on boucle sur toutes les dalles selctionner
         this.dalles_select.forEach(dalle => {
-            console.log(dalle.values_.properties.polygon);
-            console.log(polygon.values_.id);
             // si les dalles appartiennent au polygon alors on les ajouter à la liste liste_dalle_remove
             if (dalle.values_.properties.polygon === polygon.values_.id) {
                 liste_dalle_remove.push(dalle)
@@ -250,6 +248,15 @@ class App extends Component {
         map.getView().fit(polygon_extent, { padding: [50, 50, 50, 50], maxZoom: 12 });
     }
 
+    zoom_to_multi_polygon = (item) => {
+        let extent = item[0].getExtent();
+        for (let i = 1; i < item.length; i++) {
+            extent = extent.concat(item[i].getExtent());
+        }
+        const map = this.state.mapInstance
+        map.getView().fit(extent, { padding: [50, 50, 50, 50], maxZoom: 12 });
+    }
+
     list_dalle_in_polygon = (polygon, statut) => {
         // fonction qui permet de lister les dalles 
         if (statut == "open") {
@@ -345,7 +352,6 @@ class App extends Component {
                 }
             }
         });
-
         this.setState({ dalles_select: this.dalles_select });
     }
 
@@ -354,7 +360,6 @@ class App extends Component {
         // event est l'evenement du dessin
         // type est soit "rectangle" soit "polygon"
         var feature = event.feature
-        console.log(feature.getGeometry().getExtent());
         // on ajoute l'id du polygon avec ces coordonnées
         var id = `${type}-${feature.getGeometry().getExtent().map(point => Math.round(point / 1000)).join('-')}`
         feature.setProperties({
@@ -371,22 +376,50 @@ class App extends Component {
     }
 
     handleUpload = (info) => {
+        // fonction appeller lorsqu'on clique sur le bouton pour importer un fichier qui contient un polygon ou multipolygon
         const file = info.file
+        // fonction lancer quand on clique sur le bouton pour upload un fichier si l'on a pas supprimer l'ancien 
+        // permet pour l'instant d'importer qu'un seul fichier
         this.handleUploadRemove()
+        // si le fichier est bien importer sans erreur
         if (file.status === 'done') {
             message.success(`${file.name} file uploaded successfully`);
-            // on convertit nos coordonnées en polygon openlayer
-            const polygonFeature = new Feature({geometry: new Polygon([file.response.polygon_coordinates]),});
+            // on convertit notre réponse en json 
+            const file_geojson = JSON.parse(file.response.polygon)
+            let polygonGeometries = null
+            let multiPolygonFeature = null
+            // si c'est un multipolygon
+            if (file_geojson.type == "MultiPolygon") {
+                // on recupere les coordonnées des multipolygon pour le zoom
+                polygonGeometries = file_geojson.coordinates.map(coords => new Polygon(coords));
+                // on convertit nos coordonnées en multipolygon openlayer
+                multiPolygonFeature = new Feature({geometry: new MultiPolygon(file_geojson.coordinates)});
+            }else{
+                // on convertit nos coordonnées en polygon openlayer
+                multiPolygonFeature = new Feature({geometry: new Polygon(file_geojson.coordinates)});
+                polygonGeometries = multiPolygonFeature
+            }
+            // on attribue un id, qui permettra de savoir qu'elle dalle sont dans ce polygon
             const id = "file"
-            polygonFeature.setProperties({
+            multiPolygonFeature.setProperties({
                 id: id
             });
             // Ajoutez du polygons à la couche vecteur
-            this.vectorSourceFilePolygon.addFeature(polygonFeature);
-            this.zoom_to_polygon(polygonFeature)
-
-            this.getDalleInPolygon(polygonFeature.getGeometry(), id)
-            this.alert_limit_dalle()
+            this.vectorSourceFilePolygon.addFeature(multiPolygonFeature);
+            // le zoom est différent si c'est un polygon ou un mutlipolygon
+            if (file_geojson.type == "MultiPolygon") {
+                this.zoom_to_multi_polygon(polygonGeometries)
+            }else{
+                this.zoom_to_polygon(polygonGeometries)
+            }
+            
+            // Utilise setTimeout pour laisser le temps au dalle de se generer sinon il n'arrive pas a selectionner de dalle
+            // si on importe un geojson la carte se deplace et doit regenerer des dalles on attend 3 dixiemes
+            setTimeout(() => {
+                // Sélectionner les dalles
+                this.getDalleInPolygon(multiPolygonFeature.getGeometry(), id);
+                this.alert_limit_dalle();
+            }, 300);
 
         } else if (file.status === 'error') {
             message.error(`${file.name} file upload failed.`);

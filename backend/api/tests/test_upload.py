@@ -29,7 +29,11 @@ def test_upload_file_geojson_success():
         files={"file": ("test.geojson", geojson_bytes, "application/json")},
     )
     assert response.status_code == 200
-    assert response.json() == {"polygon_coordinates": [[0, 0], [1, 1], [1, 0], [0, 0]]}
+    assert response.json() == {
+        "polygon": [
+            '{"type": "Polygon", "coordinates": [[[0.0, 0.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]]]}'
+        ]
+    }
 
 
 def test_upload_geojson_invalid_geometry_type():

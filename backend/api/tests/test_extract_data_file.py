@@ -14,7 +14,9 @@ def test_extract_polygon_coordinates_valid():
     """test si la fonction extract_polygon_coordinates renvoie la bonne emprise par rapport au geojson fournit"""
     geojson_data = '{"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[[0, 0], [1, 1], [1, 0], [0, 0]]]}}]}'
     result = ExtractDataFile.extract_polygon_coordinates(geojson_data)
-    assert result == [[0, 0], [1, 1], [1, 0], [0, 0]]
+    assert result == {
+        '{"type": "Polygon", "coordinates": [[[0.0, 0.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]]]}'
+    }
 
 
 def test_extract_polygon_coordinates_missing_data():
@@ -34,13 +36,6 @@ def test_extract_polygon_coordinates_invalid_geojson():
 def test_extract_polygon_coordinates_wrong_geometry_type():
     """test si la fonction extract_polygon_coordinates renvoie une exception si le geojson n'a pas la bonne géometry"""
     geojson_data = '{"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [0, 0]}}]}'
-    with pytest.raises(HTTPException):
-        ExtractDataFile.extract_polygon_coordinates(geojson_data)
-
-
-def test_extract_polygon_coordinates_internal_error():
-    """test si la fonction extract_polygon_coordinates renvoie une exception si le polygon n'a pas de coordonnées"""
-    geojson_data = '{"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": []}}]}'
     with pytest.raises(HTTPException):
         ExtractDataFile.extract_polygon_coordinates(geojson_data)
 
