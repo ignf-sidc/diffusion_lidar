@@ -25,7 +25,21 @@ async def upload_file_geojson(file: UploadFile = File(...)):
         # Traitez le fichier GeoJSON pour extraire les coordonnées du polygone
         geojson_data = await file.read()
         polygon_coordinates = ExtractDataFile.extract_polygon_coordinates(geojson_data)
-        return {"polygon": polygon_coordinates}
+        limite_emprise_not_surpass = ExtractDataFile.limite_emprise(
+            polygon_coordinates, 2500
+        )
+        # on regarde si l'emprise fait plus de 2500 km carré
+        if limite_emprise_not_surpass:
+            return {
+                "polygon": polygon_coordinates,
+                "message": f"succés du téléchargement. Superficie : {round(limite_emprise_not_surpass,2)} km²",
+                "statut": "success",
+            }
+        return {
+            "polygon": False,
+            "message": f"erreur, L'emprise fais plus de 2500km",
+            "statut": "error",
+        }
     except Exception as e:
         raise HTTPException(
             status_code=500, detail="Erreur lors du traitement du fichier"

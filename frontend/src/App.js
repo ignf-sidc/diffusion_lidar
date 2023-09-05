@@ -37,7 +37,8 @@ class App extends Component {
             expiresDateCookie: null,
             cookie_zoom_start: cookies.get('zoom') || 6, 
             cookie_coor_start: cookies.get('coor') || [288074.8449901076, 6247982.515792289],
-            api_url: null
+            api_url: null,
+            fileUpload: []
         };
         this.day_cookie_expiration = 7
         this.dalles_select = []
@@ -383,44 +384,52 @@ class App extends Component {
         this.handleUploadRemove()
         // si le fichier est bien importer sans erreur
         if (file.status === 'done') {
-            message.success(`${file.name} file uploaded successfully`);
-            // on convertit notre réponse en json 
-            const file_geojson = JSON.parse(file.response.polygon)
-            let polygonGeometries = null
-            let multiPolygonFeature = null
-            // si c'est un multipolygon
-            if (file_geojson.type == "MultiPolygon") {
-                // on recupere les coordonnées des multipolygon pour le zoom
-                polygonGeometries = file_geojson.coordinates.map(coords => new Polygon(coords));
-                // on convertit nos coordonnées en multipolygon openlayer
-                multiPolygonFeature = new Feature({geometry: new MultiPolygon(file_geojson.coordinates)});
-            }else{
-                // on convertit nos coordonnées en polygon openlayer
-                multiPolygonFeature = new Feature({geometry: new Polygon(file_geojson.coordinates)});
-                polygonGeometries = multiPolygonFeature
+            // si le fichier ne depasse pas 2500km et que tout ce passe bien
+            if(file.response.statut == "success"){
+                message.success(`${file.name} ${file.response.message}`);
+                // on convertit notre réponse en json 
+                const file_geojson = JSON.parse(file.response.polygon)
+                let polygonGeometries = null
+                let multiPolygonFeature = null
+                // si c'est un multipolygon
+                if (file_geojson.type == "MultiPolygon") {
+                    // on recupere les coordonnées des multipolygon pour le zoom
+                    polygonGeometries = file_geojson.coordinates.map(coords => new Polygon(coords));
+                    // on convertit nos coordonnées en multipolygon openlayer
+                    multiPolygonFeature = new Feature({geometry: new MultiPolygon(file_geojson.coordinates)});
+                }else{
+                    // on convertit nos coordonnées en polygon openlayer
+                    multiPolygonFeature = new Feature({geometry: new Polygon(file_geojson.coordinates)});
+                    polygonGeometries = multiPolygonFeature
+                }
+                // on attribue un id, qui permettra de savoir qu'elle dalle sont dans ce polygon
+                const id = "file"
+                multiPolygonFeature.setProperties({
+                    id: id
+                });
+                // Ajoutez du polygons à la couche vecteur
+                this.vectorSourceFilePolygon.addFeature(multiPolygonFeature);
+                // le zoom est différent si c'est un polygon ou un mutlipolygon
+                if (file_geojson.type == "MultiPolygon") {
+                    this.zoom_to_multi_polygon(polygonGeometries)
+                }else{
+                    this.zoom_to_polygon(polygonGeometries)
+                }
+                
+                // Utilise setTimeout pour laisser le temps au dalle de se generer sinon il n'arrive pas a selectionner de dalle
+                // si on importe un geojson la carte se deplace et doit regenerer des dalles on attend 3 dixiemes
+                setTimeout(() => {
+                    // Sélectionner les dalles
+                    this.getDalleInPolygon(multiPolygonFeature.getGeometry(), id);
+                    this.alert_limit_dalle();
+                }, 300);
             }
-            // on attribue un id, qui permettra de savoir qu'elle dalle sont dans ce polygon
-            const id = "file"
-            multiPolygonFeature.setProperties({
-                id: id
-            });
-            // Ajoutez du polygons à la couche vecteur
-            this.vectorSourceFilePolygon.addFeature(multiPolygonFeature);
-            // le zoom est différent si c'est un polygon ou un mutlipolygon
-            if (file_geojson.type == "MultiPolygon") {
-                this.zoom_to_multi_polygon(polygonGeometries)
-            }else{
-                this.zoom_to_polygon(polygonGeometries)
+            // si le fichier depasse 2500km
+            else{
+                message.error(`${file.name} ${file.response.message}`);
+                // on met le statut du fichier a 'error', ce qui va permettre de colorier le fichier en rougre
+                file.status = 'error'
             }
-            
-            // Utilise setTimeout pour laisser le temps au dalle de se generer sinon il n'arrive pas a selectionner de dalle
-            // si on importe un geojson la carte se deplace et doit regenerer des dalles on attend 3 dixiemes
-            setTimeout(() => {
-                // Sélectionner les dalles
-                this.getDalleInPolygon(multiPolygonFeature.getGeometry(), id);
-                this.alert_limit_dalle();
-            }, 300);
-
         } else if (file.status === 'error') {
             message.error(`${file.name} file upload failed.`);
         }

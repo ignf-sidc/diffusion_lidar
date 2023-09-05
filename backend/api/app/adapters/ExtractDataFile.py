@@ -74,16 +74,39 @@ class ExtractDataFile:
             if multipolygons:
                 # Si des multipolygons sont présents, les fusionner en un seul multipolygon
                 merged_multipolygon = unary_union(multipolygons)
+                print(json.dumps(mapping(merged_multipolygon)))
                 return json.dumps(mapping(merged_multipolygon))
 
             if polygons:
                 # Si des polygones sont présents, les fusionner en un seul polygon
                 polygons = unary_union(polygons)
-                polygons_geojson = {json.dumps(mapping(polygons))}
-                return polygons_geojson
+                return json.dumps(mapping(polygons))
 
         except Exception as e:
             raise HTTPException(
                 status_code=500,
                 detail="Erreur lors de l'extraction des coordonnées des polygones",
             ) from e
+
+    @staticmethod
+    def limite_emprise(emprise, km_max):
+        """permet de savoir si une emprise depasse ou non 2500km carré
+
+        Args:
+            emprise (str): str qui contient un dictionnaire avec soit un polygon, soit un multipolygon
+            km (int): nombre de km max pour l'emprise
+
+        Returns:
+            float/boolean: retorune false si la limite est dépasser sinon renvoie le nombre de km
+        """
+        # Convertir les coordonnées JSON en un objet MultiPolygon
+        multipolygon = shape(json.loads(emprise))
+        # obtenir la superficie en mètres carrés
+        area_meters_squared = multipolygon.area
+        # Convertir la superficie en kilomètres carrés en divisant par 1 000 000
+        area_km_squared = area_meters_squared / 1e6
+        print(f"Superficie en kilomètres carrés : {area_km_squared} km²")
+        # si le nombre de km carré est plus que la limite km on renvoie False
+        if area_km_squared < km_max:
+            return area_km_squared
+        return False

@@ -30,9 +30,9 @@ def test_upload_file_geojson_success():
     )
     assert response.status_code == 200
     assert response.json() == {
-        "polygon": [
-            '{"type": "Polygon", "coordinates": [[[0.0, 0.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]]]}'
-        ]
+        "polygon": '{"type": "Polygon", "coordinates": [[[0.0, 0.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]]]}',
+        "message": "succés du téléchargement. Superficie : 5e-07",
+        "statut": "success",
     }
 
 
@@ -57,3 +57,30 @@ def test_upload_txt_file():
     # pylint: disable=unexpected-line-ending-format
     # pylint: disable=missing-final-newline
     assert response.status_code == 500
+
+
+def test_upload_file_geojson_limite_km_max():
+    """test si la route qui upload le geojson renvoie bien son emprise"""
+    geojson_data = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[[0, 0], [100000, 100000], [100000, 0], [0, 0]]],
+                },
+            }
+        ],
+    }
+    geojson_bytes = io.BytesIO(json.dumps(geojson_data).encode())
+    response = client.post(
+        "/upload/geojson",
+        files={"file": ("test.geojson", geojson_bytes, "application/json")},
+    )
+    assert response.status_code == 200
+    assert response.json() == {
+        "polygon": False,
+        "message": "erreur, L'emprise fais plus de 2500km",
+        "statut": "error",
+    }
