@@ -43,8 +43,7 @@ class App extends Component {
         this.day_cookie_expiration = 7
         this.dalles_select = []
         this.polygon_drawn = []
-        this.limit_dalle_select = 5
-        this.alert_limit_dalle_state = false
+        this.limit_dalle_select = 2500
         this.old_dalles_select = null
         this.selectInteractionClick = null
         this.drawPolygon = null
@@ -81,15 +80,6 @@ class App extends Component {
                     width: 2,
                 }),
             },
-            "alert_limite": {
-                fill: new Fill({
-                    color: "red",
-                }),
-                stroke: new Stroke({
-                    color: 'black',
-                    width: 2,
-                }),
-            },
             "pointer_move_dalle_menu": {
                 fill: new Fill({
                     color: "yellow",
@@ -108,12 +98,7 @@ class App extends Component {
         for (const dalle_select of this.dalles_select) {
             // si la dalle est selectionner alors au survol on lui laisse le style select et on retourne true
             if (dalle_select["values_"]["properties"]["id"] === feature["values_"]["properties"]["id"]) {
-                if (this.alert_limit_dalle_state === true) {
-                    feature.setStyle(new Style(this.style_dalle.alert_limite))
-                } else {
-                    feature.setStyle(new Style(this.style_dalle.select))
-                }
-
+                feature.setStyle(new Style(this.style_dalle.select))
                 return true
             }
         };
@@ -160,7 +145,6 @@ class App extends Component {
         this.dalles_select.splice(index, 1);
 
         this.setState({ dalles_select: this.dalles_select });
-        this.alert_limit_dalle()
         if (polygon != null) {
             this.list_dalle_in_polygon(polygon, "open")
         }else{
@@ -185,7 +169,6 @@ class App extends Component {
 
         this.setState({ dalles_select: this.dalles_select });
         this.setState({ polygon_drawn: this.drawnPolygonsLayer });
-        this.alert_limit_dalle()
     };
 
     remove_all_dalle_menu = () => {
@@ -217,30 +200,7 @@ class App extends Component {
 
         this.setState({ dalles_select: this.dalles_select });
         this.setState({ polygon_drawn: this.drawnPolygonsLayer });
-        this.alert_limit_dalle()
-    }
 
-    alert_limit_dalle = () => {
-        // fonction qui permet de colorier ou non en rouge si on dépasse la limit de dalle max
-        if (this.dalles_select.length >= this.limit_dalle_select) {
-            this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
-
-                // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
-                if (feature.getStyle() !== null) {
-                    feature.setStyle(new Style(this.style_dalle.alert_limite));
-                }
-            });
-            this.alert_limit_dalle_state = true
-        }
-        else if (this.alert_limit_dalle_state === true && this.dalles_select.length < this.limit_dalle_select) {
-            this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
-                // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
-                if (feature.getStyle() !== null) {
-                    feature.setStyle(new Style(this.style_dalle.select));
-                }
-            });
-            this.alert_limit_dalle_state = false
-        }
     }
 
     zoom_to_polygon = (item) => {
@@ -332,11 +292,7 @@ class App extends Component {
         this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
             // son recupere la feature avec la meme id que la dalle survolé dans le menu
             if (feature.values_.properties.id === id_dalle) {
-                if (this.alert_limit_dalle_state === true) {
-                    feature.setStyle(new Style(this.style_dalle.alert_limite))
-                }else{
-                    feature.setStyle(new Style(this.style_dalle.select))
-                }
+                feature.setStyle(new Style(this.style_dalle.select))
             }
         });
     }
@@ -373,7 +329,7 @@ class App extends Component {
         const polygon = feature.getGeometry();
         this.getDalleInPolygon(polygon, id)
         this.setState({ polygon_drawn: this.drawnPolygonsLayer });
-        this.alert_limit_dalle()
+        this.dalle_select_max_alert("polygon", feature)
     }
 
     handleUpload = (info) => {
@@ -421,7 +377,6 @@ class App extends Component {
                 setTimeout(() => {
                     // Sélectionner les dalles
                     this.getDalleInPolygon(multiPolygonFeature.getGeometry(), id);
-                    this.alert_limit_dalle();
                 }, 300);
             }
             // si le fichier depasse 2500km
@@ -435,13 +390,30 @@ class App extends Component {
         }
       };
     
-    handleUploadRemove = (file=null) =>{
+    handleUploadRemove = () =>{
         // fonction appellé lorsqu'on supprime le fichier telecharger
         const polygon = this.vectorSourceFilePolygon.getFeatures()[0];
-        this.remove_dalle_in_polygon(polygon)
-        this.setState({ dalles_select: this.dalles_select });
-        // Efface les polygones de la couche
-        this.vectorSourceFilePolygon.clear();
+        if(polygon){
+            this.remove_dalle_in_polygon(polygon)
+            this.setState({ dalles_select: this.dalles_select });
+            // Efface les polygones de la couche
+            this.vectorSourceFilePolygon.clear();
+        }
+    }
+
+    dalle_select_max_alert = (emprise, feature) =>{
+        // fonction qui permet de limiter les dalles à 2500km
+        if (this.state.dalles_select.length >= this.limit_dalle_select){
+            if (emprise == "polygon"){
+                this.remove_dalle_in_polygon(feature)
+                this.remove_polygon_menu(feature)
+            }
+            else{
+                console.log("click_limit");
+                this.remove_dalle_menu(null,feature)
+            }
+            message.error(`le nombre de dalles séléctionnées dépasse ${this.limit_dalle_select} km²`);
+        }
     }
 
     componentDidMount() {
@@ -558,8 +530,10 @@ class App extends Component {
                         // si la dalle n'est pas à true c'est quelle est dans la liste, donc on la deselectionne
                         if (!newSelect) {
                             // au clique sur une dalle pas selectionner on l'ajoute à la liste
+                            console.log("click");
                             featureSelect.setStyle(new Style(this.style_dalle.select))
                             this.dalles_select.push(featureSelect);
+                            this.dalle_select_max_alert("click", featureSelect)
                         }
                     }
 
@@ -576,7 +550,6 @@ class App extends Component {
 
                 }
                 this.setState({ dalles_select: this.dalles_select });
-                this.alert_limit_dalle()
             });
 
             // Créer une interaction de tracé de polygon
@@ -691,12 +664,7 @@ class App extends Component {
                             // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
                             this.dalles_select.forEach(dalle_select => {
                                 if (dalle_select["values_"]["properties"]["id"] === polygonId) {
-                                    if (this.alert_limit_dalle_state === true) {
-                                        feature.setStyle(new Style(this.style_dalle.alert_limite))
-                                    } else {
-                                        feature.setStyle(new Style(this.style_dalle.select))
-                                    }
-
+                                    feature.setStyle(new Style(this.style_dalle.select))
                                 }
                             });
 
