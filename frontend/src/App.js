@@ -297,7 +297,10 @@ class App extends Component {
         });
     }
 
-    getDalleInPolygon = (polygon, id) =>{
+    getDalleInPolygon = (feature, id, type) =>{
+        // fonction qui permet de selectionner les dalles dans un polygon
+        // Récupérer le polygone dessiné
+        const polygon = feature.getGeometry()
         // On parcourt les polygones de la grille et on recupere les dalles dans ce polygon pour les selectionner
         this.vectorSourceGridDalle.getFeatures().forEach((dalle) => {
             if (polygon.intersectsExtent(dalle.values_.geometry.extent_)) {
@@ -310,6 +313,8 @@ class App extends Component {
             }
         });
         this.setState({ dalles_select: this.dalles_select });
+        const status = this.dalle_select_max_alert(type, feature)
+        return status
     }
 
     draw_emprise = (event, type) => {
@@ -325,11 +330,10 @@ class App extends Component {
         // on ajoute le polygon à la liste des polygons
         this.drawnPolygonsLayer.getSource().addFeature(feature);
 
-        // Récupérer le polygone dessiné
-        const polygon = feature.getGeometry();
-        this.getDalleInPolygon(polygon, id)
+        
+
+        this.getDalleInPolygon(feature, id, "polygon")
         this.setState({ polygon_drawn: this.drawnPolygonsLayer });
-        this.dalle_select_max_alert("polygon", feature)
     }
 
     handleUpload = (info) => {
@@ -342,7 +346,6 @@ class App extends Component {
         if (file.status === 'done') {
             // si le fichier ne depasse pas 2500km et que tout ce passe bien
             if(file.response.statut == "success"){
-                message.success(`${file.name} ${file.response.message}`);
                 // on convertit notre réponse en json 
                 const file_geojson = JSON.parse(file.response.polygon)
                 let polygonGeometries = null
@@ -376,7 +379,10 @@ class App extends Component {
                 // si on importe un geojson la carte se deplace et doit regenerer des dalles on attend 3 dixiemes
                 setTimeout(() => {
                     // Sélectionner les dalles
-                    this.getDalleInPolygon(multiPolygonFeature.getGeometry(), id);
+                    const status = this.getDalleInPolygon(multiPolygonFeature, id, "polygon_file");
+                    if(status){
+                        message.success(`${file.name} ${file.response.message}`);
+                    }
                 }, 300);
             }
             // si le fichier depasse 2500km
@@ -408,12 +414,16 @@ class App extends Component {
                 this.remove_dalle_in_polygon(feature)
                 this.remove_polygon_menu(feature)
             }
-            else{
-                console.log("click_limit");
-                this.remove_dalle_menu(null,feature)
+            else if (emprise == "polygon_file") {
+                this.handleUploadRemove()
             }
+            else if (emprise == "click"){
+                this.remove_dalle_menu(null,feature)
+            }    
             message.error(`le nombre de dalles séléctionnées dépasse ${this.limit_dalle_select} km²`);
+            return false
         }
+        return true
     }
 
     componentDidMount() {
