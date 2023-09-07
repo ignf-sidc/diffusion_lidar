@@ -66,4 +66,4 @@ def test_emprise_superieure_limite():
     resultat = ExtractDataFile.limite_emprise(emprise, km_max)
     # pylint: disable=unexpected-line-ending-format
     # pylint: disable=missing-final-newline
-    assert not resultat 
+    assert not resultat
