@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from api.app.routes import test, upload
+from api.app.routes import test, upload, display_data
 
 load_dotenv()
 
@@ -29,3 +29,4 @@ app.add_middleware(
 
 app.include_router(test.router)
 app.include_router(upload.router)
+app.include_router(display_data.router)
