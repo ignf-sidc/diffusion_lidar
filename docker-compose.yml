@@ -44,7 +44,7 @@ services:
         - http_proxy
         - https_proxy
     volumes:
-      - '.:/frontend'
+      - './frontend:/usr/app'
       - '/frontend/node_modules'
     ports:
       - 3000:3000
