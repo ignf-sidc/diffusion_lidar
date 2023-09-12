@@ -17,6 +17,10 @@ import { BsChevronDown, BsChevronLeft } from 'react-icons/bs';
 import { withCookies } from 'react-cookie';
 import { Card, Radio, Space, Button, Upload, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
+import { get as getProjection } from 'ol/proj';
+import { register } from 'ol/proj/proj4';
+import proj4 from 'proj4';
+
 
 
 class App extends Component {
@@ -52,6 +56,7 @@ class App extends Component {
         this.vectorSourceGridDalle = new VectorSource();
         this.vectorSourceDrawPolygon = new VectorSource();
         this.vectorSourceFilePolygon = new VectorSource();
+        this.vectorSourceBloc = new VectorSource();
         this.vectorLayer = new VectorLayer({
             source: this.vectorSourceGridDalle,
             style: new Style({
@@ -69,6 +74,9 @@ class App extends Component {
         });
         this.filePolygonsLayer = new VectorLayer({
             source: this.vectorSourceFilePolygon,
+        });
+        this.drawnBlocsLayer = new VectorLayer({
+            source: this.vectorSourceBloc,
         });
         this.style_dalle = {
             "select": {
@@ -351,6 +359,7 @@ class App extends Component {
                 let polygonGeometries = null
                 let multiPolygonFeature = null
                 // si c'est un multipolygon
+                console.log(file_geojson);
                 if (file_geojson.type == "MultiPolygon") {
                     // on recupere les coordonnées des multipolygon pour le zoom
                     polygonGeometries = file_geojson.coordinates.map(coords => new Polygon(coords));
@@ -426,16 +435,27 @@ class App extends Component {
         return true
     }
 
-    componentDidMount() {
-        axios.get(`http://localhost:8000/hello_world`)
+    generate_multipolygon_bloc = () => {
+        axios.get(`${this.state.api_url}:8000/data/get/blocs`)
             .then(response => {
                 console.log(response.data);
+                response.data.result.features.forEach(bloc => {
+                    const multiPolygonFeature = new Feature({geometry: new MultiPolygon(bloc.geometry.coordinates)});
+                    multiPolygonFeature.setProperties({
+                        id: bloc.properties.Nom_bloc,
+                        superficie: bloc.properties.Superficie
+                    });
+                    this.vectorSourceBloc.addFeature(multiPolygonFeature);
+                });
+                console.log(this.vectorSourceBloc);
             })
-            .catch(error => {
-                console.error(error);
-            });
-        
+    }
 
+    componentDidMount() {
+        proj4.defs("EPSG:2154", "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+        register(proj4);
+        
+        
         const expiresDate = new Date();
         expiresDate.setDate(expiresDate.getDate() + this.day_cookie_expiration)
         // expiration des cookies
@@ -450,9 +470,11 @@ class App extends Component {
                     }),
                     this.vectorLayer, // Ajout de la couche qui affichera les polygons
                     this.drawnPolygonsLayer, // ajout de la couche qui affichera le polygon pour séléectionner des dalles
-                    this.filePolygonsLayer // ajout de la couche qui affichera le polygon d'un fichier geojson ou shp
+                    this.filePolygonsLayer, // ajout de la couche qui affichera le polygon d'un fichier geojson ou shp
+                    this.drawnBlocsLayer // ajout de la couche qui affichera les blocs
                 ],
                 view: new View({
+                    projection: getProjection('EPSG:2154'),
                     center: this.state.cookie_coor_start,
                     zoom: this.state.cookie_zoom_start,
                     maxZoom: 16,
@@ -462,6 +484,8 @@ class App extends Component {
             const appProtocol = window.location.protocol; 
             const appHostname = window.location.hostname; 
             this.setState({ api_url: `${appProtocol}//${appHostname}` });
+            this.generate_multipolygon_bloc()
+            
             // on stocke la map dans une variable du contructeur, pour pouvoir l'utiliser dans d'autre fonction
             this.setState({ mapInstance: map });
 
@@ -540,7 +564,6 @@ class App extends Component {
                         // si la dalle n'est pas à true c'est quelle est dans la liste, donc on la deselectionne
                         if (!newSelect) {
                             // au clique sur une dalle pas selectionner on l'ajoute à la liste
-                            console.log("click");
                             featureSelect.setStyle(new Style(this.style_dalle.select))
                             this.dalles_select.push(featureSelect);
                             this.dalle_select_max_alert("click", featureSelect)
