@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Map } from 'ol';
+import { View, Map, Overlay} from 'ol';
 import axios from 'axios';
 import Feature from 'ol/Feature';
 import { Polygon, MultiPolygon } from 'ol/geom';
@@ -615,8 +615,34 @@ class App extends Component {
             zoomToClickBloc.on('select', (event) => {
                 console.log(event);
                 this.zoom_to_polygon(event.selected[0], 11)
+                overlay.getElement().style.display = 'none';
             });
-             
+
+            // Créer une interaction de sélection pour gérer le survol des blocs
+            const selectInteractionBloc = new Select({
+                condition: function (event) {
+                    return event.type === 'pointermove';
+                },
+                layers: [this.drawnBlocsLayer],
+            });
+
+            // évenement au survol d'un bloc
+            selectInteractionBloc.on('select', (event) => {
+                if (event.selected.length > 0) {
+                    const selectedFeature = event.selected[0];
+                    const extent = selectedFeature.values_.geometry.extent_;
+                    // Calcul du centre de l'extent pour afficher l'overlay par rapport au centre du bloc 
+                    // et non par rapport au coordonnées de la souris
+                    const centerX = (extent[0] + extent[2]) / 2;
+                    const centerY = (extent[1] + extent[3]) / 2;
+
+                    // Afficher les informations du bloc dans une fenêtre contextuelle (popup)
+                    overlay.getElement().innerHTML = selectedFeature["values_"]["id"]
+                    overlay.setPosition([centerX, centerY]);
+                    overlay.getElement().style.display = 'block';
+                }
+            });
+
 
             const mouseMoveListener = (event) => {
                 const pixel = map.getEventPixel(event.originalEvent);
@@ -631,6 +657,19 @@ class App extends Component {
             map.addInteraction(this.selectInteractionClick);
             map.addInteraction(selectInteraction);
             map.addInteraction(zoomToClickBloc);
+            map.addInteraction(selectInteractionBloc);
+
+             // Créer une couche pour afficher les informations de la dalle survolée
+             var overlay = new Overlay({
+                element: document.getElementById('popup'),
+                autoPan: false,
+                autoPanAnimation: {
+                    duration: 250,
+                },
+            });
+
+            // Ajoutez la couche à la carte
+            map.addOverlay(overlay);
 
             // Lorsque qu'on se déplace sur la carte
             map.on('moveend', () => {
