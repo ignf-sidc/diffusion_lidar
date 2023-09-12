@@ -613,7 +613,6 @@ class App extends Component {
             });
             
             zoomToClickBloc.on('select', (event) => {
-                console.log(event);
                 this.zoom_to_polygon(event.selected[0], 11)
                 overlay.getElement().style.display = 'none';
             });
@@ -696,70 +695,30 @@ class App extends Component {
                     var maxX = extent[2];
                     var maxY = extent[3];
 
-                    // taille d'une dalle kilométrique 
-                    var tileSize = 1000;
-
-                    // Calcule le nombre de dalles nécessaires en X et en Y
-                    var numTilesX = Math.ceil((maxX - minX) / tileSize);
-                    var numTilesY = Math.ceil((maxY - minY) / tileSize);
-
-                    // Parcoure sur les dalles et ajout de leurs coordonnées
-                    for (var i = 0; i < numTilesX; i++) {
-                        for (var j = 0; j < numTilesY; j++) {
-                            var tileMinX = minX + i * tileSize;
-                            var tileMinY = minY + j * tileSize;
-                            var tileMaxX = Math.min(tileMinX + tileSize, maxX);
-                            var tileMaxY = Math.min(tileMinY + tileSize, maxY);
-
-                            // Arrondir les coordonnées aux nombres ronds
-                            var tileMinX = Math.round(tileMinX / 1000) * 1000;
-                            var tileMinY = Math.round(tileMinY / 1000) * 1000;
-                            var tileMaxX = Math.round(tileMaxX / 1000) * 1000;
-                            var tileMaxY = Math.round(tileMaxY / 1000) * 1000;
-
-                            // Ajout d'une marge aux coordonnées des carrés pour garantir une taille cohérente
-                            // var margin = 1; // ajustez la valeur de la marge selon vos besoins
-                            // tileMinX += margin;
-                            // tileMinY += margin;
-                            // tileMaxX -= margin;
-                            // tileMaxY -= margin;
-
-                            // Créatipn du polygon pour la dalle
-                            var polygon = new Polygon([
-                                [
-                                    [tileMinX, tileMinY],
-                                    [tileMaxX, tileMinY],
-                                    [tileMaxX, tileMaxY],
-                                    [tileMinX, tileMaxY],
-                                    [tileMinX, tileMinY],
-                                ],
-                            ]);
-
-                            // nom de la dalle
-                            var polygonId = 'dalle-' + tileMaxX + '-' + tileMinY;
-
-                            // Vérifiez si le polygone est sélectionné et appliquez le style approprié
-                            // var isSelected = this.state.selectedFeatures.some((feature) => feature.getGeometry().getId() === polygon.getId());
-
-
-                            var feature = new Feature({
-                                geometry: polygon,
-                                properties: {
-                                    id: polygonId,
-                                },
+                    axios.get(`${this.state.api_url}:8000/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`)
+                    .then(response => {
+                        response.data.result.forEach(dalle => {
+                            const dalle_polygon = JSON.parse(dalle.polygon)
+                            const dalleFeature = new Feature({geometry: new Polygon(dalle_polygon.coordinates)});
+                            const regex = /LHD_FXX_(\d{4}_\d{4})/;
+                            const name_dalle = dalle.name.match(regex);
+                            dalleFeature.setProperties({
+                                properties:{
+                                    id: name_dalle[0],
+                                    url_download: dalle.name
+                                }
                             });
                             // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
                             this.dalles_select.forEach(dalle_select => {
-                                if (dalle_select["values_"]["properties"]["id"] === polygonId) {
-                                    feature.setStyle(new Style(this.style_dalle.select))
+                                if (dalle_select["values_"]["properties"]["id"] === name_dalle[0]) {
+                                    console.log(dalle_select);
+                                    dalleFeature.setStyle(new Style(this.style_dalle.select))
                                 }
                             });
-
-
                             // Ajoutez des polygons à la couche vecteur
-                            this.vectorSourceGridDalle.addFeature(feature);
-                        }
-                    }
+                            this.vectorSourceGridDalle.addFeature(dalleFeature);
+                        });
+                    })
                 }else{
                     this.handleModeChange({"target": {"value": "click"}})
                     this.generate_multipolygon_bloc()
