@@ -438,7 +438,7 @@ class App extends Component {
     generate_multipolygon_bloc = () => {
         axios.get(`${this.state.api_url}:8000/data/get/blocs`)
             .then(response => {
-                console.log(response.data);
+                this.drawnBlocsLayer.getSource().clear();
                 response.data.result.features.forEach(bloc => {
                     const multiPolygonFeature = new Feature({geometry: new MultiPolygon(bloc.geometry.coordinates)});
                     multiPolygonFeature.setProperties({
@@ -447,7 +447,6 @@ class App extends Component {
                     });
                     this.vectorSourceBloc.addFeature(multiPolygonFeature);
                 });
-                console.log(this.vectorSourceBloc);
             })
     }
 
@@ -484,7 +483,6 @@ class App extends Component {
             const appProtocol = window.location.protocol; 
             const appHostname = window.location.hostname; 
             this.setState({ api_url: `${appProtocol}//${appHostname}` });
-            this.generate_multipolygon_bloc()
             
             // on stocke la map dans une variable du contructeur, pour pouvoir l'utiliser dans d'autre fonction
             this.setState({ mapInstance: map });
@@ -632,8 +630,9 @@ class App extends Component {
                 // recupere la bbox de la fenetre de son pc
                 var extent = view.calculateExtent(map.getSize());
 
-                // Efface les anciens polygones
+                // Efface les anciens polygones et blocs
                 this.vectorSourceGridDalle.clear();
+                this.drawnBlocsLayer.getSource().clear();
 
                 if (view.getZoom() >= this.zoom_dispaly_dalle) {
                     // Calcule les coordonnées de la bbox
@@ -708,6 +707,7 @@ class App extends Component {
                     }
                 }else{
                     this.handleModeChange({"target": {"value": "click"}})
+                    this.generate_multipolygon_bloc()
                 }
             });
         }
