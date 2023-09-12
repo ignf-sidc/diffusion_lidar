@@ -211,10 +211,13 @@ class App extends Component {
 
     }
 
-    zoom_to_polygon = (item) => {
-        const polygon_extent = item.values_.geometry.extent_
-        const map = this.state.mapInstance
-        map.getView().fit(polygon_extent, { padding: [50, 50, 50, 50], maxZoom: 12 });
+    zoom_to_polygon = (item, niv_zoom) => {
+        if (item){
+            const polygon_extent = item.values_.geometry.extent_
+            const map = this.state.mapInstance
+            map.getView().fit(polygon_extent, { padding: [50, 50, 50, 50] });
+            map.getView().setZoom(niv_zoom);
+        }
     }
 
     zoom_to_multi_polygon = (item) => {
@@ -381,7 +384,7 @@ class App extends Component {
                 if (file_geojson.type == "MultiPolygon") {
                     this.zoom_to_multi_polygon(polygonGeometries)
                 }else{
-                    this.zoom_to_polygon(polygonGeometries)
+                    this.zoom_to_polygon(polygonGeometries, 12)
                 }
                 
                 // Utilise setTimeout pour laisser le temps au dalle de se generer sinon il n'arrive pas a selectionner de dalle
@@ -601,6 +604,18 @@ class App extends Component {
             this.drawRectangle.on('drawend', (event) => {
                 this.draw_emprise(event, "rectangle");
             });
+
+            const zoomToClickBloc = new Select({
+                condition: function (event) {
+                    return event.type === 'click';
+                },
+                layers: [this.drawnBlocsLayer],
+            });
+            
+            zoomToClickBloc.on('select', (event) => {
+                console.log(event);
+                this.zoom_to_polygon(event.selected[0], 11)
+            });
              
 
             const mouseMoveListener = (event) => {
@@ -615,6 +630,7 @@ class App extends Component {
             // Ajout de l'interaction de sélection à la carte
             map.addInteraction(this.selectInteractionClick);
             map.addInteraction(selectInteraction);
+            map.addInteraction(zoomToClickBloc);
 
             // Lorsque qu'on se déplace sur la carte
             map.on('moveend', () => {
@@ -778,7 +794,7 @@ class App extends Component {
                                 {this.state.dalles_select.map((item, index) => (
                                     <div className="liste_dalle inner-div" key={index}>
                                         <button className='map-icon-button' onClick={() => this.remove_dalle_menu(index, item)}><FaTimes style={{ color: 'red' }} /></button>
-                                        <button className='map-icon-button' onClick={() => this.zoom_to_polygon(item)}><FaMapMarker /></button>
+                                        <button className='map-icon-button' onClick={() => this.zoom_to_polygon(item, 12)}><FaMapMarker /></button>
                                         <p 
                                         onMouseEnter={() => this.pointerMoveDalleMenu(item.values_.properties.id)}
                                         onMouseLeave={() => this.quitPointerMoveDalleMenu(item.values_.properties.id)}
@@ -813,7 +829,7 @@ class App extends Component {
                                             <button className='map-icon-button' onClick={() => this.remove_polygon_menu(polygon)}>
                                                 <FaTimes style={{ color: 'red' }} />
                                             </button>
-                                            <button className='map-icon-button' onClick={() => this.zoom_to_polygon(polygon)}>
+                                            <button className='map-icon-button' onClick={() => this.zoom_to_polygon(polygon, 12)}>
                                                 <FaMapMarker />
                                             </button>
 
@@ -842,7 +858,7 @@ class App extends Component {
                                                         <button className='map-icon-button' onClick={() => this.remove_dalle_menu(null, dalle, polygon)}>
                                                             <FaTimes style={{ color: 'red' }} />
                                                         </button>
-                                                        <button className='map-icon-button' onClick={() => this.zoom_to_polygon(dalle)}>
+                                                        <button className='map-icon-button' onClick={() => this.zoom_to_polygon(dalle, 12)}>
                                                             <FaMapMarker />
                                                         </button>
                                                         <p
