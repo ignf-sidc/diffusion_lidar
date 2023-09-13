@@ -793,11 +793,11 @@ class App extends Component {
                                     <div className="liste_dalle inner-div" key={index}>
                                         <button className='map-icon-button' onClick={() => this.remove_dalle_menu(index, item)}><FaTimes style={{ color: 'red' }} /></button>
                                         <button className='map-icon-button' onClick={() => this.zoom_to_polygon(item, 12)}><FaMapMarker /></button>
-                                        <p 
+                                        <a href={item.values_.properties.url_download}
                                         onMouseEnter={() => this.pointerMoveDalleMenu(item.values_.properties.id)}
                                         onMouseLeave={() => this.quitPointerMoveDalleMenu(item.values_.properties.id)}
                                         >
-                                        {item.values_.properties.id}</p>
+                                        {item.values_.properties.id}</a>
                                     </div>
                                 ))}
                                 </div>
@@ -859,10 +859,10 @@ class App extends Component {
                                                         <button className='map-icon-button' onClick={() => this.zoom_to_polygon(dalle, 12)}>
                                                             <FaMapMarker />
                                                         </button>
-                                                        <p
+                                                        <a href={dalle.values_.properties.url_download}
                                                         onMouseEnter={() => this.pointerMoveDalleMenu(dalle.values_.properties.id)}
                                                         onMouseLeave={() => this.quitPointerMoveDalleMenu(dalle.values_.properties.id)}
-                                                        >{dalle.values_.properties.id}</p>
+                                                        >{dalle.values_.properties.id}</a>
                                                     </div>
                                                 ))}
                                             </div>
