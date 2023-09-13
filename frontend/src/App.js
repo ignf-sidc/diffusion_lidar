@@ -16,7 +16,7 @@ import { MdDelete } from 'react-icons/md';
 import { BsChevronDown, BsChevronLeft } from 'react-icons/bs';
 import { withCookies } from 'react-cookie';
 import { Card, Radio, Space, Button, Upload, message } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { UploadOutlined, DownloadOutlined } from '@ant-design/icons';
 import { get as getProjection } from 'ol/proj';
 import { register } from 'ol/proj/proj4';
 import proj4 from 'proj4';
@@ -44,6 +44,7 @@ class App extends Component {
             api_url: null,
             fileUpload: []
         };
+        this.name_file_txt = "liste_dalle.txt"
         this.day_cookie_expiration = 7
         this.dalles_select = []
         this.polygon_drawn = []
@@ -453,6 +454,29 @@ class App extends Component {
             })
     }
 
+    handleTelechargement = () => {
+        let contentTxt = ""
+        // ajout de chaque dalle dans le contenu du txt
+        this.dalles_select.forEach(dalle => {
+            contentTxt += dalle.values_.properties.url_download + "\n";
+        });
+        // Créer un objet Blob avec le contenu texte
+        const blob = new Blob([contentTxt], { type: 'text/plain' });
+        // Créer une URL pour le Blob
+        const blobUrl = URL.createObjectURL(blob);
+        // Créer un lien pour le téléchargement du fichier
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = this.name_file_txt;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        // Déclencher le téléchargement
+        a.click();
+        // Nettoyer après le téléchargement
+        URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(a);
+      };
+
     componentDidMount() {
         proj4.defs("EPSG:2154", "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
         register(proj4);
@@ -810,8 +834,6 @@ class App extends Component {
                     <p>Pas encore disponible</p>
                     </div>
                     <br/>
-                    <br/>
-                    <br/>
                     {this.drawnPolygonsLayer.getSource().getFeatures().length !== 0 ? (
                         <div className="polygon_drawn">
 
@@ -880,7 +902,18 @@ class App extends Component {
 
                         </div>
                     ) : null}
-
+                    {this.state.dalles_select.length > 0 ? (
+                        <div className='center'>
+                           <Button 
+                           onClick={this.handleTelechargement} 
+                           type="default" icon={<DownloadOutlined />} 
+                           size="large" 
+                           >Télécharger TXT</Button>
+                           
+                        </div>
+                        ) : (
+                            null
+                        )}
                 </div>
             </div>
         );

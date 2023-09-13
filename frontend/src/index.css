@@ -93,3 +93,7 @@ code {
   overflow: scroll;; /* Masque le contenu dépassant la hauteur maximale */
 }
 
+.center{
+  text-align: center;
+}
+
