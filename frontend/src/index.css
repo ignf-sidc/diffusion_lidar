@@ -44,7 +44,9 @@ code {
 .menu {
   width: 20%;
   float: left;
-  height: 100%;
+  height: 100vh;
+  overflow: scroll;
+  max-height: 100vh;
 }
 
 .dalle-select, .polygon_drawn, .menu_mode{
@@ -90,10 +92,18 @@ code {
 
 .outer-div {
   max-height: 150px; /* Hauteur maximale */
-  overflow: scroll;; /* Masque le contenu dépassant la hauteur maximale */
+  overflow: scroll; /* Masque le contenu dépassant la hauteur maximale */
 }
 
 .center{
   text-align: center;
+}
+
+p{
+  margin: 0;
+}
+
+.button_download{
+  margin-bottom: 20px;
 }
 

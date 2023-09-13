@@ -15,7 +15,7 @@ import { FaTimes, FaMapMarker } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
 import { BsChevronDown, BsChevronLeft } from 'react-icons/bs';
 import { withCookies } from 'react-cookie';
-import { Card, Radio, Space, Button, Upload, message } from 'antd';
+import { Card, Radio, Space, Button, Upload, message, Collapse } from 'antd';
 import { UploadOutlined, DownloadOutlined } from '@ant-design/icons';
 import { get as getProjection } from 'ol/proj';
 import { register } from 'ol/proj/proj4';
@@ -735,7 +735,6 @@ class App extends Component {
                             // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
                             this.dalles_select.forEach(dalle_select => {
                                 if (dalle_select["values_"]["properties"]["id"] === name_dalle[0]) {
-                                    console.log(dalle_select);
                                     dalleFeature.setStyle(new Style(this.style_dalle.select))
                                 }
                             });
@@ -758,6 +757,130 @@ class App extends Component {
     }
 
     render() {
+        const list_dalles = (
+            <div>
+              <button onClick={() => this.remove_all_dalle_menu()}>
+                <MdDelete style={{ color: 'red' }} /> Supprimer toutes les dalles
+              </button>
+              <div className="outer-div">
+                {this.state.dalles_select.map((item, index) => (
+                  <div className="liste_dalle inner-div" key={index}>
+                    <button className='map-icon-button' onClick={() => this.remove_dalle_menu(index, item)}>
+                      <FaTimes style={{ color: 'red' }} />
+                    </button>
+                    <button className='map-icon-button' onClick={() => this.zoom_to_polygon(item, 12)}>
+                      <FaMapMarker />
+                    </button>
+                    <a href={item.values_.properties.url_download}
+                       onMouseEnter={() => this.pointerMoveDalleMenu(item.values_.properties.id)}
+                       onMouseLeave={() => this.quitPointerMoveDalleMenu(item.values_.properties.id)}
+                    >
+                      {item.values_.properties.id}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        
+        const drawnPolygonsLayer = this.drawnPolygonsLayer; 
+        const features = drawnPolygonsLayer.getSource().getFeatures();
+
+        const list_polygons = (
+            <div>
+            <p>Nombre de polygons séléctionnées : {features.length}</p>
+    
+            <button onClick={() => this.remove_all_polygons_menu()}>
+                <MdDelete style={{ color: 'red' }} /> Supprimer tous les polygons
+            </button>
+    
+            <div className="outer-div">
+                {features.map((polygon, index) => (
+                <div key={index}>
+                    <div className="liste_dalle">
+                    <button className='map-icon-button' onClick={() => this.remove_polygon_menu(polygon)}>
+                        <FaTimes style={{ color: 'red' }} />
+                    </button>
+                    <button className='map-icon-button' onClick={() => this.zoom_to_polygon(polygon, 12)}>
+                        <FaMapMarker />
+                    </button>
+    
+                    {this.state.polygon_select_list_dalle.polygon !== polygon ? (
+                        <>
+                        <button className='map-icon-button' onClick={() => this.list_dalle_in_polygon(polygon, "open")}>
+                            <BsChevronLeft style={{ strokeWidth: '3px' }} />
+                        </button>
+                        <p>{polygon.values_.id}</p>
+                        </>
+                    ) : (
+                        <>
+                        <button className='map-icon-button' onClick={() => this.list_dalle_in_polygon(polygon, "close")}>
+                            <BsChevronDown style={{ strokeWidth: '3px' }} />
+                        </button>
+                        <p>{polygon.values_.id}</p>
+                        </>
+                    )}
+                    </div>
+    
+                    {this.state.polygon_select_list_dalle.polygon === polygon ? (
+                    <div className="dalle-select-polygon">
+                        {this.state.polygon_select_list_dalle.dalles.map((dalle, key) => (
+                        <div className="liste_dalle" key={key}>
+                            <button className='map-icon-button' onClick={() => this.remove_dalle_menu(null, dalle, polygon)}>
+                            <FaTimes style={{ color: 'red' }} />
+                            </button>
+                            <button className='map-icon-button' onClick={() => this.zoom_to_polygon(dalle, 12)}>
+                            <FaMapMarker />
+                            </button>
+                            <a
+                            href={dalle.values_.properties.url_download}
+                            onMouseEnter={() => this.pointerMoveDalleMenu(dalle.values_.properties.id)}
+                            onMouseLeave={() => this.quitPointerMoveDalleMenu(dalle.values_.properties.id)}
+                            >
+                            {dalle.values_.properties.id}
+                            </a>
+                        </div>
+                        ))}
+                    </div>
+                    ) : null}
+                </div>
+                ))}
+            </div>
+            </div>
+        );
+      
+          const items_collapse_liste_dalles_and_polygons = [
+            {
+              key: '1',
+              label: 'Liste des dalles selectionner',
+              children: list_dalles, 
+            },
+            {
+                key: '2',
+                label: 'Liste des polygons',
+                children: list_polygons, 
+              }
+          ];
+
+          const items_collapse_liste_produit_derive = [
+            {
+                key: '1',
+                label: 'Liste des MNS',
+                children: <p>données pas encore disponible</p>, 
+            },
+            {
+                key: '2',
+                label: 'Liste des MNT',
+                children: <p>données pas encore disponible</p>, 
+            },
+            {
+                key: '3',
+                label: 'Autres',
+                children: <p>données pas encore disponible</p>, 
+            },
+          ];
+
+
         return (
             <div>
                 <div className="map-container">
@@ -790,12 +913,6 @@ class App extends Component {
                                         >
                                         <Button icon={<UploadOutlined />}>Upload Geojson</Button>
                                         </Upload>
-                                        {/* <Upload
-                                        maxCount={5}
-                                        multiple
-                                        >
-                                        <Button icon={<UploadOutlined />}>Upload Shapefile</Button>
-                                        </Upload> */}
                                 </Space>
                             </Card>
                         </div>
@@ -808,108 +925,28 @@ class App extends Component {
                         ) : (
                             <React.Fragment>
                                 {this.state.dalles_select.length >= this.limit_dalle_select ? (
-                                    <p className="text_red">Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</p>
-                                ) : (<p>Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</p>)}
-
-                                <button onClick={() => this.remove_all_dalle_menu()}><MdDelete style={{ color: 'red' }} /> Supprimer toutes les dalles </button>
-                                <div className="outer-div">
-                                {this.state.dalles_select.map((item, index) => (
-                                    <div className="liste_dalle inner-div" key={index}>
-                                        <button className='map-icon-button' onClick={() => this.remove_dalle_menu(index, item)}><FaTimes style={{ color: 'red' }} /></button>
-                                        <button className='map-icon-button' onClick={() => this.zoom_to_polygon(item, 12)}><FaMapMarker /></button>
-                                        <a href={item.values_.properties.url_download}
-                                        onMouseEnter={() => this.pointerMoveDalleMenu(item.values_.properties.id)}
-                                        onMouseLeave={() => this.quitPointerMoveDalleMenu(item.values_.properties.id)}
-                                        >
-                                        {item.values_.properties.id}</a>
-                                    </div>
-                                ))}
-                                </div>
+                                    <h5 className="text_red">Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</h5>
+                                ) : (<h5>Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</h5>)}
+                                <Collapse items={items_collapse_liste_dalles_and_polygons}></Collapse>
                             </React.Fragment>
-                            
-
                         )}
                     
                     <h3>Produits dérivés</h3>
-                    <p>Pas encore disponible</p>
+                    {this.state.dalles_select.length === 0 ? (
+                            <p>Aucune données séléctionnées.</p>
+                        ) : (
+                            <Collapse items={items_collapse_liste_produit_derive}></Collapse>
+                        )}
+                    
                     </div>
-                    <br/>
-                    {this.drawnPolygonsLayer.getSource().getFeatures().length !== 0 ? (
-                        <div className="polygon_drawn">
-
-                            <React.Fragment>
-                                <h5>Affichage des polygons tracés</h5>
-                                <p>Nombre de polygons séléctionnées : {this.drawnPolygonsLayer.getSource().getFeatures().length}</p>
-
-                                <button onClick={() => this.remove_all_polygons_menu()}><MdDelete style={{ color: 'red' }} /> Supprimer tous les polygons</button>
-                                <div className="outer-div">
-                                {this.drawnPolygonsLayer.getSource().getFeatures().map((polygon, index) => (
-                                    <div>
-                                        <div className="liste_dalle" key={index}>
-                                            <button className='map-icon-button' onClick={() => this.remove_polygon_menu(polygon)}>
-                                                <FaTimes style={{ color: 'red' }} />
-                                            </button>
-                                            <button className='map-icon-button' onClick={() => this.zoom_to_polygon(polygon, 12)}>
-                                                <FaMapMarker />
-                                            </button>
-
-                                            {this.state.polygon_select_list_dalle.polygon !== polygon ? (
-                                                <>
-                                                    <button className='map-icon-button' onClick={() => this.list_dalle_in_polygon(polygon, "open")}>
-                                                        <BsChevronLeft style={{ strokeWidth: '3px' }} />
-                                                    </button>
-                                                    <p>{polygon.values_.id}</p>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button className='map-icon-button' onClick={() => this.list_dalle_in_polygon(polygon, "close")}>
-                                                        <BsChevronDown style={{ strokeWidth: '3px' }} />
-                                                    </button>
-                                                    <p>{polygon.values_.id}</p>
-                                                </>
-                                            )}
-                                        </div>
-                                    
-
-                                        {this.state.polygon_select_list_dalle.polygon === polygon ? (
-                                            <div className="dalle-select-polygon">
-                                                {this.state.polygon_select_list_dalle.dalles.map((dalle, key) => (
-                                                    <div className="liste_dalle" key={key}>
-                                                        <button className='map-icon-button' onClick={() => this.remove_dalle_menu(null, dalle, polygon)}>
-                                                            <FaTimes style={{ color: 'red' }} />
-                                                        </button>
-                                                        <button className='map-icon-button' onClick={() => this.zoom_to_polygon(dalle, 12)}>
-                                                            <FaMapMarker />
-                                                        </button>
-                                                        <a href={dalle.values_.properties.url_download}
-                                                        onMouseEnter={() => this.pointerMoveDalleMenu(dalle.values_.properties.id)}
-                                                        onMouseLeave={() => this.quitPointerMoveDalleMenu(dalle.values_.properties.id)}
-                                                        >{dalle.values_.properties.id}</a>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            null
-                                        )}
-
-
-                                    </div>
-                                    
-                                ))}
-                                </div>
-                            </React.Fragment>
-
-
-                        </div>
-                    ) : null}
                     {this.state.dalles_select.length > 0 ? (
                         <div className='center'>
                            <Button 
+                           className='button_download'
                            onClick={this.handleTelechargement} 
                            type="default" icon={<DownloadOutlined />} 
                            size="large" 
                            >Télécharger TXT</Button>
-                           
                         </div>
                         ) : (
                             null
