@@ -16,7 +16,7 @@ import { MdDelete } from 'react-icons/md';
 import { BsChevronDown, BsChevronLeft } from 'react-icons/bs';
 import { withCookies } from 'react-cookie';
 import { Card, Radio, Space, Button, Upload, message, Collapse } from 'antd';
-import { UploadOutlined, DownloadOutlined } from '@ant-design/icons';
+import { UploadOutlined, DownloadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { get as getProjection } from 'ol/proj';
 import { register } from 'ol/proj/proj4';
 import proj4 from 'proj4';
@@ -759,9 +759,6 @@ class App extends Component {
     render() {
         const list_dalles = (
             <div>
-              <button onClick={() => this.remove_all_dalle_menu()}>
-                <MdDelete style={{ color: 'red' }} /> Supprimer toutes les dalles
-              </button>
               <div className="outer-div">
                 {this.state.dalles_select.map((item, index) => (
                   <div className="liste_dalle inner-div" key={index}>
@@ -788,12 +785,7 @@ class App extends Component {
 
         const list_polygons = (
             <div>
-            <p>Nombre de polygons séléctionnées : {features.length}</p>
-    
-            <button onClick={() => this.remove_all_polygons_menu()}>
-                <MdDelete style={{ color: 'red' }} /> Supprimer tous les polygons
-            </button>
-    
+            <h4 style={{margin: "0"}}>Nombre de polygons séléctionnées : {features.length}</h4>
             <div className="outer-div">
                 {features.map((polygon, index) => (
                 <div key={index}>
@@ -851,15 +843,17 @@ class App extends Component {
       
           const items_collapse_liste_dalles_and_polygons = [
             {
-              key: '1',
-              label: 'Liste des dalles selectionner',
-              children: list_dalles, 
+                key: '1',
+                label: 'Liste des dalles selectionner',
+                children: list_dalles,
+                extra: <DeleteOutlined style={{ color: 'red' }} onClick={this.remove_all_dalle_menu}/>, 
             },
             {
                 key: '2',
                 label: 'Liste des polygons',
                 children: list_polygons, 
-              }
+                extra: <DeleteOutlined style={{ color: 'red' }} onClick={this.remove_all_polygons_menu}/>
+            }
           ];
 
           const items_collapse_liste_produit_derive = [
