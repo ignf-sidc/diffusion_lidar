@@ -366,7 +366,6 @@ class App extends Component {
                 let polygonGeometries = null
                 let multiPolygonFeature = null
                 // si c'est un multipolygon
-                console.log(file_geojson);
                 if (file_geojson.type == "MultiPolygon") {
                     // on recupere les coordonnées des multipolygon pour le zoom
                     polygonGeometries = file_geojson.coordinates.map(coords => new Polygon(coords));
@@ -378,12 +377,13 @@ class App extends Component {
                     polygonGeometries = multiPolygonFeature
                 }
                 // on attribue un id, qui permettra de savoir qu'elle dalle sont dans ce polygon
-                const id = "file"
+                const id = file.name
                 multiPolygonFeature.setProperties({
                     id: id
                 });
                 // Ajoutez du polygons à la couche vecteur
                 this.vectorSourceFilePolygon.addFeature(multiPolygonFeature);
+                this.vectorSourceDrawPolygon.addFeature(multiPolygonFeature)
                 // le zoom est différent si c'est un polygon ou un mutlipolygon
                 if (file_geojson.type == "MultiPolygon") {
                     this.zoom_to_multi_polygon(polygonGeometries)
@@ -420,6 +420,11 @@ class App extends Component {
             this.setState({ dalles_select: this.dalles_select });
             // Efface les polygones de la couche
             this.vectorSourceFilePolygon.clear();
+            this.drawnPolygonsLayer.getSource().getFeatures().forEach((polygon) => {
+                // on lance la fonction qui supprime le polygon en question
+                this.remove_polygon_menu(polygon)
+            });
+
         }
     }
 
@@ -917,9 +922,7 @@ class App extends Component {
                             <br/>
                             {this.state.dalles_select.length > 0 ? (
                                 <div className='center'>
-                                    
                                     <Button 
-                                    className='button_download'
                                     onClick={this.handleTelechargement} 
                                     type="default" icon={<DownloadOutlined />} 
                                     size="large" 
