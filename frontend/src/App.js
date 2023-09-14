@@ -8,7 +8,7 @@ import VectorSource from 'ol/source/Vector';
 import { Style, Fill, Stroke } from 'ol/style';
 import { Select, Draw } from 'ol/interaction';
 import {createBox, createRegularPolygon,} from 'ol/interaction/Draw.js';
-import { Services, olExtended } from 'geoportal-extensions-openlayers';
+import { Logger, Services, olExtended } from 'geoportal-extensions-openlayers';
 import '../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css';
 import '../node_modules/ol/ol.css';
 import { FaTimes, FaMapMarker } from 'react-icons/fa';
@@ -208,6 +208,7 @@ class App extends Component {
         });
         // on met la liste des polygons à 0
         this.drawnPolygonsLayer.getSource().clear();
+        this.filePolygonsLayer.getSource().clear();
 
         this.setState({ dalles_select: this.dalles_select });
         this.setState({ polygon_drawn: this.drawnPolygonsLayer });
@@ -420,9 +421,11 @@ class App extends Component {
             this.setState({ dalles_select: this.dalles_select });
             // Efface les polygones de la couche
             this.vectorSourceFilePolygon.clear();
-            this.drawnPolygonsLayer.getSource().getFeatures().forEach((polygon) => {
-                // on lance la fonction qui supprime le polygon en question
-                this.remove_polygon_menu(polygon)
+            this.drawnPolygonsLayer.getSource().getFeatures().forEach((polygon_feature) => {
+                if (polygon.values_.id == polygon_feature.values_.id) {
+                    // on lance la fonction qui supprime le polygon en question
+                    this.remove_polygon_menu(polygon_feature)
+                }
             });
 
         }
