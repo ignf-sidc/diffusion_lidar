@@ -180,7 +180,7 @@ class App extends Component {
         this.setState({ polygon_drawn: this.drawnPolygonsLayer });
     };
 
-    remove_all_dalle_menu = () => {
+    remove_all_dalle_menu = (event) => {
         // fonction lancer pour supprimer toutes les dalles
         // on parcourt la liste des dalles dans la fenetre pour remettre leur design de base
         this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
@@ -195,9 +195,11 @@ class App extends Component {
         // il n'y a pu de dalle, les polygons n'ont donc pu de dalle dans leurs emprises, on peut donc les supprimer
         this.drawnPolygonsLayer.getSource().clear();
         this.setState({ polygon_drawn: this.drawnPolygonsLayer });
+        // empeche d'ouvrir ou de fermer le collapse quand on appuie sur le bouton pour supprimer
+        event.stopPropagation();
     }
 
-    remove_all_polygons_menu = () => {
+    remove_all_polygons_menu = (event) => {
         // fonction lancer pour supprimer tous les polygons
         // on parcourt la liste des polygons 
         this.drawnPolygonsLayer.getSource().getFeatures().forEach((polygon) => {
@@ -209,7 +211,8 @@ class App extends Component {
 
         this.setState({ dalles_select: this.dalles_select });
         this.setState({ polygon_drawn: this.drawnPolygonsLayer });
-
+        // empeche d'ouvrir ou de fermer le collapse quand on appuie sur le bouton pour supprimer
+        event.stopPropagation();
     }
 
     zoom_to_polygon = (item, niv_zoom) => {
@@ -841,34 +844,34 @@ class App extends Component {
             </div>
         );
       
-          const items_collapse_liste_dalles_and_polygons = [
+          const items_collapse_liste_polygons = [
             {
                 key: '1',
-                label: 'Liste des dalles selectionner',
-                children: list_dalles,
-                extra: <DeleteOutlined style={{ color: 'red' }} onClick={this.remove_all_dalle_menu}/>, 
-            },
-            {
-                key: '2',
                 label: 'Liste des polygons',
                 children: list_polygons, 
                 extra: <DeleteOutlined style={{ color: 'red' }} onClick={this.remove_all_polygons_menu}/>
             }
           ];
 
-          const items_collapse_liste_produit_derive = [
+          const items_collapse_liste_produit = [
             {
                 key: '1',
+                label: 'Liste des nuages de points classés',
+                children: list_dalles,
+                extra: <DeleteOutlined style={{ color: 'red' }} onClick={this.remove_all_dalle_menu}/>, 
+            },
+            {
+                key: '2',
                 label: 'Liste des MNS',
                 children: <p>données pas encore disponible</p>, 
             },
             {
-                key: '2',
+                key: '3',
                 label: 'Liste des MNT',
                 children: <p>données pas encore disponible</p>, 
             },
             {
-                key: '3',
+                key: '4',
                 label: 'Autres',
                 children: <p>données pas encore disponible</p>, 
             },
@@ -909,42 +912,40 @@ class App extends Component {
                                         </Upload>
                                 </Space>
                             </Card>
+                            <br/>
+                            <Collapse items={items_collapse_liste_polygons}></Collapse>
+                            <br/>
+                            {this.state.dalles_select.length > 0 ? (
+                                <div className='center'>
+                                    
+                                    <Button 
+                                    className='button_download'
+                                    onClick={this.handleTelechargement} 
+                                    type="default" icon={<DownloadOutlined />} 
+                                    size="large" 
+                                    >Télécharger liste des dalles</Button>
+                                </div>
+                            ) : (
+                                null
+                            )}
+                            
                         </div>
                     ) : null}
 
                     <div className="dalle-select">
-                        <h3 className="mt-4">Nuages de points classés</h3>
                         {this.state.dalles_select.length === 0 ? (
-                            <p>Aucune données séléctionnées.</p>
+                            <h3 className="center">Aucune données séléctionnées.</h3>
                         ) : (
                             <React.Fragment>
                                 {this.state.dalles_select.length >= this.limit_dalle_select ? (
                                     <h5 className="text_red">Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</h5>
                                 ) : (<h5>Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</h5>)}
-                                <Collapse items={items_collapse_liste_dalles_and_polygons}></Collapse>
+                                <Collapse items={items_collapse_liste_produit}></Collapse>
                             </React.Fragment>
                         )}
                     
-                    <h3>Produits dérivés</h3>
-                    {this.state.dalles_select.length === 0 ? (
-                            <p>Aucune données séléctionnées.</p>
-                        ) : (
-                            <Collapse items={items_collapse_liste_produit_derive}></Collapse>
-                        )}
-                    
                     </div>
-                    {this.state.dalles_select.length > 0 ? (
-                        <div className='center'>
-                           <Button 
-                           className='button_download'
-                           onClick={this.handleTelechargement} 
-                           type="default" icon={<DownloadOutlined />} 
-                           size="large" 
-                           >Télécharger TXT</Button>
-                        </div>
-                        ) : (
-                            null
-                        )}
+                    
                 </div>
             </div>
         );
