@@ -54,6 +54,7 @@ class App extends Component {
         this.drawPolygon = null
         this.drawRectangle = null
         this.zoom_dispaly_dalle = 11
+        this.display_couche_gestionnaire = ["Plan IGN v2"]
         this.vectorSourceGridDalle = new VectorSource();
         this.vectorSourceDrawPolygon = new VectorSource();
         this.vectorSourceFilePolygon = new VectorSource();
@@ -533,6 +534,18 @@ class App extends Component {
                 groupSelectStyle: 'group'
             });
             map.addControl(layerSwitcher);
+
+            // code qui permet de supprimer les couches du gestionnaire de couche
+            // on recupere les layers dans la couche du ggestionnaire
+            const layers = document.querySelectorAll(".GPlayerSwitcher_layer");
+            layers.forEach(layer => {
+                // on regarde si l'element n'a pas le meme nom que dans la liste des couches qui doivent etre dans le gestionnaire de couche
+                // alors on le display none
+                if (!this.display_couche_gestionnaire.includes(layer.firstChild.firstChild.innerHTML)) {
+                    layer.style.display = "none"
+                }
+            });
+
             var attributions = new olExtended.control.GeoportalAttribution();
             map.addControl(attributions);
 
