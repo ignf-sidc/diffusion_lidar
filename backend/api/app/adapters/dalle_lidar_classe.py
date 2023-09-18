@@ -100,18 +100,20 @@ def get_blocs_classe():
     """
     bdd = get_connexion_bdd()
     blocs_geojson = {"features": []}
-    if bdd :
+    if bdd:
         bdd.execute("SELECT * FROM bloc")
         blocs = bdd.fetchall()
         for bloc in blocs:
-            blocs_geojson['features'].append(
-                {"type": "Feature",
-                "properties": {
-                    "Nom_bloc": bloc["name"],
-                    "Superficie": int(area(loads(bloc["geom"])) / 1000000)
-                },
-                "geometry": json.loads(to_geojson(loads(bloc["geom"])))
-                })
+            blocs_geojson["features"].append(
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "Nom_bloc": bloc["name"],
+                        "Superficie": int(area(loads(bloc["geom"])) / 1000000),
+                    },
+                    "geometry": json.loads(to_geojson(loads(bloc["geom"]))),
+                }
+            )
     return blocs_geojson
 
 
