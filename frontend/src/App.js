@@ -913,9 +913,6 @@ class App extends Component {
                 </div>
 
                 <div className="menu">
-                    {this.state.coor_mouse !== null ? (
-                        <p className='menu_mode'>{Math.round(this.state.coor_mouse[0])} - {Math.round(this.state.coor_mouse[1])}</p>
-                        ) : ( null )}
                     
                     {this.state.zoom >= this.zoom_dispaly_dalle ? (
                         <div className='menu_mode'>
@@ -968,7 +965,13 @@ class App extends Component {
                         )}
                     
                     </div>
-                    
+                    {this.state.coor_mouse !== null ? (
+                        <div>
+                            <Card>
+                            <p style={{margin: "0",fontSize: '16px',fontWeight: 'bold'}} className='menu_mode center'>Coordonées : {Math.round(this.state.coor_mouse[0])} - {Math.round(this.state.coor_mouse[1])}</p>
+                            </Card>
+                            </div>
+                        ) : ( null )}
                 </div>
             </div>
         );
