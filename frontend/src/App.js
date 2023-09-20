@@ -54,7 +54,7 @@ class App extends Component {
         this.drawPolygon = null
         this.drawRectangle = null
         this.zoom_dispaly_dalle = 11
-        this.display_couche_gestionnaire = ["Plan IGN v2"]
+        this.display_couche_gestionnaire = ["Plan IGN v2", "Photographies aériennes"]
         this.vectorSourceGridDalle = new VectorSource();
         this.vectorSourceDrawPolygon = new VectorSource();
         this.vectorSourceFilePolygon = new VectorSource();
@@ -83,7 +83,7 @@ class App extends Component {
         this.style_dalle = {
             "select": {
                 fill: new Fill({
-                    color: 'rgba(112, 119, 122, 0.5)',
+                    color: '#20bf0a',
                 }),
                 stroke: new Stroke({
                     color: 'rgba(112, 119, 122)',
@@ -92,7 +92,7 @@ class App extends Component {
             },
             "pointer_move_dalle_menu": {
                 fill: new Fill({
-                    color: "yellow",
+                    color: "#1a951f",
                 }),
                 stroke: new Stroke({
                     color: 'black',
@@ -506,6 +506,10 @@ class App extends Component {
                     new olExtended.layer.GeoportalWMTS({
                         layer: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2"
                     }),
+                    // new olExtended.layer.GeoportalWMTS({
+                    //     layer: "ORTHOIMAGERY.ORTHOPHOTOS",
+                    //     visible: false
+                    // }),
                     this.vectorLayer, // Ajout de la couche qui affichera les polygons
                     this.drawnPolygonsLayer, // ajout de la couche qui affichera le polygon pour séléectionner des dalles
                     this.filePolygonsLayer, // ajout de la couche qui affichera le polygon d'un fichier geojson ou shp
