@@ -246,7 +246,7 @@ class App extends Component {
     // on ajoute le polygon à la liste des polygons
     this.drawnPolygonsLayer.getSource().addFeature(feature);
 
-    this.getDalleInPolygon(feature, id, "polygon");
+    this.get_dalle_in_polygon(feature, id, "polygon");
     this.setState({ polygon_drawn: this.drawnPolygonsLayer });
   };
 
@@ -747,10 +747,10 @@ class App extends Component {
         extra: (
           <DeleteOutlined
             style={{ color: "red" }}
-            onClick={remove_all_polygons_menu(
-              this.drawnPolygonsLayer,
-              this.filePolygonsLayer
-            )}
+            onClick={() => remove_all_polygons_menu(
+                this.drawnPolygonsLayer,
+                this.filePolygonsLayer
+              )}
           />
         ),
       },
@@ -764,7 +764,7 @@ class App extends Component {
         extra: (
           <DeleteOutlined
             style={{ color: "red" }}
-            onClick={remove_all_dalle_menu(
+            onClick={() => remove_all_dalle_menu(
               this.vectorSourceGridDalle,
               this.dalles_select,
               this.drawnPolygonsLayer
