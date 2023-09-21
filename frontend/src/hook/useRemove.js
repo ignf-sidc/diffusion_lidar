@@ -59,7 +59,9 @@ function remove_dalle_menu(
 function remove_polygon_menu(
   polygon,
   drawnPolygonsLayer,
-  vectorSourceDrawPolygon
+  vectorSourceDrawPolygon,
+  dalles_select,
+  vectorSourceGridDalle
 ) {
   // fonction qui permet de supprimer un polygon
 
@@ -74,7 +76,7 @@ function remove_polygon_menu(
         vectorSourceDrawPolygon.removeFeature(feature);
       }
       // on lance la fonction qui supprime les dalles du polygons supprimer
-      remove_dalle_in_polygon(polygon);
+      remove_dalle_in_polygon(polygon, dalles_select, vectorSourceGridDalle);
     });
 }
 
@@ -103,8 +105,11 @@ function remove_all_dalle_menu(
 function remove_all_polygons_menu(
   event,
   drawnPolygonsLayer,
-  filePolygonsLayer
+  filePolygonsLayer,
+  dalles_select, 
+  vectorSourceGridDalle
 ) {
+  console.log(dalles_select);
   // fonction lancer pour supprimer tous les polygons
   // on parcourt la liste des polygons
   drawnPolygonsLayer
@@ -112,11 +117,16 @@ function remove_all_polygons_menu(
     .getFeatures()
     .forEach((polygon) => {
       // on lance la fonction qui supprime les dalles du polygons supprimer (donc tous les polygons dans cette fonction)
-      remove_dalle_in_polygon(polygon);
+      remove_dalle_in_polygon(polygon, dalles_select, vectorSourceGridDalle);
     });
   // on met la liste des polygons à 0
-  drawnPolygonsLayer.getSource().clear();
-  filePolygonsLayer.getSource().clear();
+  if (drawnPolygonsLayer !== undefined) {
+    drawnPolygonsLayer.getSource().clear();
+  }
+  if (filePolygonsLayer !== undefined) {
+    filePolygonsLayer.getSource().clear();
+  }
+  
 
   // empeche d'ouvrir ou de fermer le collapse quand on appuie sur le bouton pour supprimer
   event.stopPropagation();
