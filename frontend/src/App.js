@@ -144,7 +144,9 @@ class App extends Component {
         remove_polygon_menu(
           polygon,
           this.drawnPolygonsLayer,
-          this.vectorSourceDrawPolygon
+          this.vectorSourceDrawPolygon,
+          this.dalles_select,
+          this.vectorSourceGridDalle
         );
         // sinon on laisse le polygon ouvert et on affiche les dalles de ce polygon
       } else {
@@ -257,7 +259,9 @@ class App extends Component {
         remove_polygon_menu(
           enitite_select,
           this.drawnPolygonsLayer,
-          this.vectorSourceDrawPolygon
+          this.vectorSourceDrawPolygon,
+          this.dalles_select,
+          this.vectorSourceGridDalle
         );
       } else if (emprise == "polygon_file") {
         this.handleUploadRemove();
@@ -611,10 +615,10 @@ class App extends Component {
               <a
                 href={item.values_.properties.url_download}
                 onMouseEnter={() =>
-                  this.pointerMoveDalleMenu(item.values_.properties.id)
+                  this.pointer_move_dalleMenu(item.values_.properties.id)
                 }
                 onMouseLeave={() =>
-                  this.quitPointerMoveDalleMenu(item.values_.properties.id)
+                  this.quit_pointer_move_dalleMenu(item.values_.properties.id)
                 }
               >
                 {item.values_.properties.id}
@@ -643,7 +647,9 @@ class App extends Component {
                     remove_polygon_menu(
                       polygon,
                       this.drawnPolygonsLayer,
-                      this.vectorSourceDrawPolygon
+                      this.vectorSourceDrawPolygon,
+                      this.dalles_select,
+                      this.vectorSourceGridDalle
                     )
                   }
                 >
@@ -716,12 +722,12 @@ class App extends Component {
                         <a
                           href={dalle.values_.properties.url_download}
                           onMouseEnter={() =>
-                            this.pointerMoveDalleMenu(
+                            this.pointer_move_dalleMenu(
                               dalle.values_.properties.id
                             )
                           }
                           onMouseLeave={() =>
-                            this.quitPointerMoveDalleMenu(
+                            this.quit_pointer_move_dalleMenu(
                               dalle.values_.properties.id
                             )
                           }
@@ -748,8 +754,11 @@ class App extends Component {
           <DeleteOutlined
             style={{ color: "red" }}
             onClick={() => remove_all_polygons_menu(
+                event,
                 this.drawnPolygonsLayer,
-                this.filePolygonsLayer
+                this.filePolygonsLayer,
+                this.dalles_select,
+                this.vectorSourceGridDalle
               )}
           />
         ),
@@ -765,6 +774,7 @@ class App extends Component {
           <DeleteOutlined
             style={{ color: "red" }}
             onClick={() => remove_all_dalle_menu(
+              event,
               this.vectorSourceGridDalle,
               this.dalles_select,
               this.drawnPolygonsLayer
