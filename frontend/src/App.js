@@ -184,26 +184,6 @@ class App extends Component {
     }
   };
 
-  handle_mode_change = (mode) => {
-    this.setState({ selectedMode: mode.target.value }, () => {
-      // Cette fonction permet de changer de mode de selection et d'ajouter et supprimer les différentes interactions
-      var map = this.state.mapInstance;
-      if (this.state.selectedMode == "polygon") {
-        map.removeInteraction(this.selectInteractionClick);
-        map.addInteraction(this.drawPolygon);
-        map.removeInteraction(this.drawRectangle);
-      } else if (this.state.selectedMode == "rectangle") {
-        map.removeInteraction(this.selectInteractionClick);
-        map.removeInteraction(this.drawPolygon);
-        map.addInteraction(this.drawRectangle);
-      } else if (this.state.selectedMode == "click") {
-        map.addInteraction(this.selectInteractionClick);
-        map.removeInteraction(this.drawPolygon);
-        map.removeInteraction(this.drawRectangle);
-      }
-    });
-  };
-
   pointer_move_dalleMenu = (id_dalle) => {
     // on parcours la liste des dalles
     this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
@@ -270,105 +250,6 @@ class App extends Component {
     this.setState({ polygon_drawn: this.drawnPolygonsLayer });
   };
 
-  handleUpload = (info) => {
-    // fonction appeller lorsqu'on clique sur le bouton pour importer un fichier qui contient un polygon ou multipolygon
-    const file = info.file;
-    // fonction lancer quand on clique sur le bouton pour upload un fichier si l'on a pas supprimer l'ancien
-    // permet pour l'instant d'importer qu'un seul fichier
-    this.handleUploadRemove();
-    // si le fichier est bien importer sans erreur
-    if (file.status === "done") {
-      // si le fichier ne depasse pas 2500km et que tout ce passe bien
-      if (file.response.statut == "success") {
-        // on convertit notre réponse en json
-        const file_geojson = JSON.parse(file.response.polygon);
-        let polygonGeometries = null;
-        let multiPolygonFeature = null;
-        // si c'est un multipolygon
-        if (file_geojson.type == "MultiPolygon") {
-          // on recupere les coordonnées des multipolygon pour le zoom
-          polygonGeometries = file_geojson.coordinates.map(
-            (coords) => new Polygon(coords)
-          );
-          // on convertit nos coordonnées en multipolygon openlayer
-          multiPolygonFeature = new Feature({
-            geometry: new MultiPolygon(file_geojson.coordinates),
-          });
-        } else {
-          // on convertit nos coordonnées en polygon openlayer
-          multiPolygonFeature = new Feature({
-            geometry: new Polygon(file_geojson.coordinates),
-          });
-          polygonGeometries = multiPolygonFeature;
-        }
-        // on attribue un id, qui permettra de savoir qu'elle dalle sont dans ce polygon
-        const id = file.name;
-        multiPolygonFeature.setProperties({
-          id: id,
-        });
-        // Ajoutez du polygons à la couche vecteur
-        this.vectorSourceFilePolygon.addFeature(multiPolygonFeature);
-        this.vectorSourceDrawPolygon.addFeature(multiPolygonFeature);
-        // le zoom est différent si c'est un polygon ou un mutlipolygon
-        if (file_geojson.type == "MultiPolygon") {
-          zoom_to_multi_polygon(polygonGeometries, this.state.mapInstance);
-        } else {
-          zoom_to_polygon(polygonGeometries, 12, this.state.mapInstance);
-        }
-
-        // Utilise setTimeout pour laisser le temps au dalle de se generer sinon il n'arrive pas a selectionner de dalle
-        // si on importe un geojson la carte se deplace et doit regenerer des dalles on attend 3 dixiemes
-        setTimeout(() => {
-          // Sélectionner les dalles
-          const status = this.getDalleInPolygon(
-            multiPolygonFeature,
-            id,
-            "polygon_file"
-          );
-          if (status) {
-            message.success(`${file.name} ${file.response.message}`);
-          }
-        }, 300);
-      }
-      // si le fichier depasse 2500km
-      else {
-        message.error(`${file.name} ${file.response.message}`);
-        // on met le statut du fichier a 'error', ce qui va permettre de colorier le fichier en rougre
-        file.status = "error";
-      }
-    } else if (file.status === "error") {
-      message.error(`${file.name} file upload failed.`);
-    }
-  };
-
-  handleUploadRemove = () => {
-    // fonction appellé lorsqu'on supprime le fichier telecharger
-    const polygon = this.vectorSourceFilePolygon.getFeatures()[0];
-    if (polygon) {
-      remove_dalle_in_polygon(
-        polygon,
-        this.dalles_select,
-        this.vectorSourceGridDalle
-      );
-      this.setState({ dalles_select: this.dalles_select });
-      // Efface les polygones de la couche
-      this.vectorSourceFilePolygon.clear();
-      this.drawnPolygonsLayer
-        .getSource()
-        .getFeatures()
-        .forEach((polygon_feature) => {
-          if (polygon.values_.id == polygon_feature.values_.id) {
-            // on lance la fonction qui supprime le polygon en question
-            remove_polygon_menu(
-              polygon_feature,
-              this.drawnPolygonsLayer,
-              this.vectorSourceDrawPolygon
-            );
-          }
-        });
-    }
-  };
-
   dalle_select_max_alert = (emprise, enitite_select) => {
     // fonction qui permet de limiter les dalles à 2500km
     if (this.state.dalles_select.length >= this.limit_dalle_select) {
@@ -410,29 +291,6 @@ class App extends Component {
         this.vectorSourceBloc.addFeature(multiPolygonFeature);
       });
     });
-  };
-
-  handleTelechargement = () => {
-    let contentTxt = "";
-    // ajout de chaque dalle dans le contenu du txt
-    this.dalles_select.forEach((dalle) => {
-      contentTxt += dalle.values_.properties.url_download + "\n";
-    });
-    // Créer un objet Blob avec le contenu texte
-    const blob = new Blob([contentTxt], { type: "text/plain" });
-    // Créer une URL pour le Blob
-    const blobUrl = URL.createObjectURL(blob);
-    // Créer un lien pour le téléchargement du fichier
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = this.name_file_txt;
-    a.style.display = "none";
-    document.body.appendChild(a);
-    // Déclencher le téléchargement
-    a.click();
-    // Nettoyer après le téléchargement
-    URL.revokeObjectURL(blobUrl);
-    document.body.removeChild(a);
   };
 
   componentDidMount() {
@@ -940,80 +798,7 @@ class App extends Component {
           </div>
         </div>
 
-        <div className="menu">
-          {this.state.coor_mouse !== null ? (
-            <p className="menu_mode">
-              {Math.round(this.state.coor_mouse[0])} -{" "}
-              {Math.round(this.state.coor_mouse[1])}
-            </p>
-          ) : null}
-
-          {this.state.zoom >= this.zoom_dispaly_dalle ? (
-            <div className="menu_mode">
-              <Card title="Choix du mode de séléction">
-                <Space
-                  direction="vertical"
-                  style={{ width: "100%" }}
-                  size="large"
-                >
-                  <Radio.Group
-                    onChange={this.handle_mode_change}
-                    value={this.state.selectedMode}
-                  >
-                    <Radio value={"click"}>Click</Radio>
-                    <Radio value={"polygon"}>Polygon</Radio>
-                    <Radio value={"rectangle"}>Rectangle</Radio>
-                  </Radio.Group>
-                  <Upload
-                    maxCount={1}
-                    accept=".geojson"
-                    action={`${this.state.api_url}:8000/upload/geojson`}
-                    onChange={this.handleUpload}
-                    onRemove={this.handleUploadRemove}
-                  >
-                    <Button icon={<UploadOutlined />}>Upload Geojson</Button>
-                  </Upload>
-                </Space>
-              </Card>
-              <br />
-              <Collapse items={items_collapse_liste_polygons}></Collapse>
-              <br />
-              {this.state.dalles_select.length > 0 ? (
-                <div className="center">
-                  <Button
-                    onClick={this.handleTelechargement}
-                    type="default"
-                    icon={<DownloadOutlined />}
-                    size="large"
-                  >
-                    Télécharger liste des dalles
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          <div className="dalle-select">
-            {this.state.dalles_select.length === 0 ? (
-              <h3 className="center">Aucune données séléctionnées.</h3>
-            ) : (
-              <React.Fragment>
-                {this.state.dalles_select.length >= this.limit_dalle_select ? (
-                  <h5 className="text_red">
-                    Nombre de dalles séléctionnées :{" "}
-                    {this.state.dalles_select.length}/{this.limit_dalle_select}
-                  </h5>
-                ) : (
-                  <h5>
-                    Nombre de dalles séléctionnées :{" "}
-                    {this.state.dalles_select.length}/{this.limit_dalle_select}
-                  </h5>
-                )}
-                <Collapse items={items_collapse_liste_produit}></Collapse>
-              </React.Fragment>
-            )}
-          </div>
-        </div>
+        
       </div>
     );
   }
