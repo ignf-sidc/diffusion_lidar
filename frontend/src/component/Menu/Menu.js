@@ -17,8 +17,8 @@ export const Menu = (props) => {
           ) : null}
 
           {props.zoom >= props.zoom_dispaly_dalle ? (
-            <MenuMod props={zoom:props.zoom, props.selectedMode, props.dalles_select}/>
-          ) : null}
+            // <MenuMod props={zoom:props.zoom, props.selectedMode, props.dalles_select}/>
+          ) : null }
 
           <div className="dalle-select">
             {props.dalles_select.length === 0 ? (
