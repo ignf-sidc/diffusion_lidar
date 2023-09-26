@@ -39,7 +39,6 @@ export const App = (props) => {
     selectedFeatures: [],
     dalles_select: [],
     polygon_drawn: [],
-    mapInstance: null,
     polygon_select_list_dalle: { polygon: null, dalles: [] },
     selectedMode: "click",
     coordinate_mouse: null,
@@ -48,7 +47,6 @@ export const App = (props) => {
     cookie_coor_start: cookies.get("coor") || [
       288074.8449901076, 6247982.515792289,
     ],
-    api_url: null,
     fileUpload: [],
     dalles_select: [],
     polygon_drawn: [],
@@ -57,7 +55,8 @@ export const App = (props) => {
     drawPolygon: null,
     drawRectangle: null,
   });
-  const [zoom, setZoom]= useState(5);
+  const [zoom, setZoom] = useState(5);
+  const [api_url, setApi_url] = useState();
   const name_file_txt = "liste_dalle.txt";
   const day_cookie_expiration = 7;
   const limit_dalle_select = 2500;
@@ -78,6 +77,7 @@ export const App = (props) => {
       }),
     }),
   });
+
   const drawnPolygonsLayer = new VectorLayer({
     source: vectorSourceDrawPolygon,
   });
@@ -107,6 +107,19 @@ export const App = (props) => {
       }),
     },
   };
+
+  const [mapInstance, setMapInstance] = useState(
+    new Map({
+      target: "map",
+      layers: [],
+      view: new View({
+        projection: getProjection("EPSG:2154"),
+        center: MapState.cookie_coor_start,
+        zoom: MapState.cookie_zoom_start,
+        maxZoom: 16,
+      }),
+    })
+  );
 
   const style_dalle_select = (feature, MapState) => {
     // fonction permettant d'ajuster le style au survol d'une dalle
@@ -244,7 +257,7 @@ export const App = (props) => {
     const id = `${type}-${feature
       .getGeometry()
       .getExtent()
-      .map((point) => Math.round(point / 1000))
+      .mapInstance((point) => Math.round(point / 1000))
       .join("-")}`;
     feature.setProperties({
       id: id,
@@ -313,7 +326,7 @@ export const App = (props) => {
     return (
       <div>
         <div className="outer-div">
-          {MapState.dalles_select.map((item, index) => (
+          {MapState.dalles_select.mapInstance((item, index) => (
             <div className="liste_dalle inner-div" key={index}>
               <button
                 className="map-icon-button"
@@ -331,7 +344,7 @@ export const App = (props) => {
               </button>
               <button
                 className="map-icon-button"
-                onClick={() => zoom_to_polygon(item, 12, MapState.mapInstance)}
+                onClick={() => zoom_to_polygon(item, 12, mapInstance)}
               >
                 <FaMapMarker />
               </button>
@@ -380,9 +393,7 @@ export const App = (props) => {
               </button>
               <button
                 className="map-icon-button"
-                onClick={() =>
-                  zoom_to_polygon(polygon, 12, MapState.mapInstance)
-                }
+                onClick={() => zoom_to_polygon(polygon, 12, mapInstance)}
               >
                 <FaMapMarker />
               </button>
@@ -412,46 +423,46 @@ export const App = (props) => {
 
             {MapState.polygon_select_list_dalle.polygon === polygon ? (
               <div className="dalle-select-polygon">
-                {MapState.polygon_select_list_dalle.dalles.map((dalle, key) => (
-                  <div className="liste_dalle" key={key}>
-                    <button
-                      className="map-icon-button"
-                      onClick={() =>
-                        remove_dalle_menu(
-                          dalle,
-                          dalles_select,
-                          vectorSourceGridDalle,
-                          list_dalle_in_polygon,
-                          null,
-                          (polygon = polygon)
-                        )
-                      }
-                    >
-                      <FaTimes style={{ color: "red" }} />
-                    </button>
-                    <button
-                      className="map-icon-button"
-                      onClick={() =>
-                        zoom_to_polygon(dalle, 12, MapState.mapInstance)
-                      }
-                    >
-                      <FaMapMarker />
-                    </button>
-                    <a
-                      href={dalle.values_.properties.url_download}
-                      onMouseEnter={() =>
-                        pointer_move_dalle_menu(dalle.values_.properties.id)
-                      }
-                      onMouseLeave={() =>
-                        quit_pointer_move_dalle_menu(
-                          dalle.values_.properties.id
-                        )
-                      }
-                    >
-                      {dalle.values_.properties.id}
-                    </a>
-                  </div>
-                ))}
+                {MapState.polygon_select_list_dalle.dalles.mapInstance(
+                  (dalle, key) => (
+                    <div className="liste_dalle" key={key}>
+                      <button
+                        className="map-icon-button"
+                        onClick={() =>
+                          remove_dalle_menu(
+                            dalle,
+                            dalles_select,
+                            vectorSourceGridDalle,
+                            list_dalle_in_polygon,
+                            null,
+                            (polygon = polygon)
+                          )
+                        }
+                      >
+                        <FaTimes style={{ color: "red" }} />
+                      </button>
+                      <button
+                        className="map-icon-button"
+                        onClick={() => zoom_to_polygon(dalle, 12, mapInstance)}
+                      >
+                        <FaMapMarker />
+                      </button>
+                      <a
+                        href={dalle.values_.properties.url_download}
+                        onMouseEnter={() =>
+                          pointer_move_dalle_menu(dalle.values_.properties.id)
+                        }
+                        onMouseLeave={() =>
+                          quit_pointer_move_dalle_menu(
+                            dalle.values_.properties.id
+                          )
+                        }
+                      >
+                        {dalle.values_.properties.id}
+                      </a>
+                    </div>
+                  )
+                )}
               </div>
             ) : null}
           </div>
@@ -531,15 +542,19 @@ export const App = (props) => {
       // expiration des cookies
       setMapState({ ...MapState, expiresDateCookie: expiresDate });
 
+      const appProtocol = window.location.protocol;
+      const appHostname = window.location.hostname;
+      setApi_url(`${appProtocol}//${appHostname}`)
+      console.log(api_url);
+
       const onSuccess = (config) => {
         // Traitement réussi ici
         createMap(
           MapState,
           dalleLayer,
-          drawnPolygonsLayer,
-          filePolygonsLayer,
           drawnBlocsLayer,
-          zoom
+          zoom,
+          mapInstance,
         );
       };
 
@@ -562,47 +577,30 @@ export const App = (props) => {
   const createMap = (
     MapState,
     dalleLayer,
-    drawnPolygonsLayer,
-    filePolygonsLayer,
     drawnBlocsLayer,
-    zoom
+    zoom,
+    mapInstance,
   ) => {
-    let map = new Map({
-      target: "map",
-      layers: [
-        new olExtended.layer.GeoportalWMTS({
-          layer: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
-        }),
-        dalleLayer, // Ajout de la couche qui affichera les polygons
-        drawnPolygonsLayer, // ajout de la couche qui affichera le polygon pour séléectionner des dalles
-        filePolygonsLayer, // ajout de la couche qui affichera le polygon d'un fichier geojson ou shp
-        drawnBlocsLayer, // ajout de la couche qui affichera les blocs
-      ],
-      view: new View({
-        projection: getProjection("EPSG:2154"),
-        center: MapState.cookie_coor_start,
-        zoom: MapState.cookie_zoom_start,
-        maxZoom: 16,
-      }),
-    });
 
-    const appProtocol = window.location.protocol;
-    const appHostname = window.location.hostname;
-    setMapState({ ...MapState, api_url: `${appProtocol}//${appHostname}` });
-
-    // on stocke la map dans une variable du contructeur, pour pouvoir l'utiliser dans d'autre fonction
-    setMapState({ ...MapState, mapInstance: map });
+    console.log("hello");
+     
+    mapInstance.addLayer(
+      new olExtended.layer.GeoportalWMTS({
+        layer: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
+      }));
+    setMapInstance(mapInstance)
+    console.log(mapInstance.getLayers());
 
     const search = new olExtended.control.SearchEngine({ zoomTo: 12 });
-    map.addControl(search);
+    mapInstance.addControl(search);
 
     const layerSwitcher = new olExtended.control.LayerSwitcher({
       reverse: true,
       groupSelectStyle: "group",
     });
-    map.addControl(layerSwitcher);
+    mapInstance.addControl(layerSwitcher);
     const attributions = new olExtended.control.GeoportalAttribution();
-    map.addControl(attributions);
+    mapInstance.addControl(attributions);
 
     // Créer une interaction de sélection pour gérer le survol des polygones
     const selectInteraction = new Select({
@@ -714,7 +712,7 @@ export const App = (props) => {
     });
 
     zoomToClickBloc.on("select", (event) => {
-      zoom_to_polygon(event.selected[0], 11, MapState.mapInstance);
+      zoom_to_polygon(event.selected[0], 11, mapInstance);
       overlay.getElement().style.display = "none";
     });
 
@@ -744,18 +742,18 @@ export const App = (props) => {
     });
 
     const mouseMoveListener = (event) => {
-      const pixel = map.getEventPixel(event.originalEvent);
-      const lonLat = map.getCoordinateFromPixel(pixel);
+      const pixel = mapInstance.getEventPixel(event.originalEvent);
+      const lonLat = mapInstance.getCoordinateFromPixel(pixel);
       setMapState({ ...MapState, coordinate_mouse: lonLat });
     };
 
-    map.on("pointermove", mouseMoveListener);
+    mapInstance.on("pointermove", mouseMoveListener);
 
     // Ajout de l'interaction de sélection à la carte
-    map.addInteraction(selectInteractionClick);
-    map.addInteraction(selectInteraction);
-    map.addInteraction(zoomToClickBloc);
-    map.addInteraction(selectInteractionBloc);
+    mapInstance.addInteraction(selectInteractionClick);
+    mapInstance.addInteraction(selectInteraction);
+    mapInstance.addInteraction(zoomToClickBloc);
+    mapInstance.addInteraction(selectInteractionBloc);
 
     // Créer une couche pour afficher les informations de la dalle survolée
     const overlay = new Overlay({
@@ -767,12 +765,12 @@ export const App = (props) => {
     });
 
     // Ajoutez la couche à la carte
-    map.addOverlay(overlay);
+    mapInstance.addOverlay(overlay);
 
     // Lorsque qu'on se déplace sur la carte
-    map.on("moveend", () => {
-      const view = map.getView();
-      setZoom(view.getZoom()); 
+    mapInstance.on("moveend", () => {
+      const view = mapInstance.getView();
+      setZoom(view.getZoom());
       // creation du cookie
       const { cookies } = props;
       // on set le cookie à chaque fois qu'on zoom
@@ -784,7 +782,7 @@ export const App = (props) => {
         expires: MapState.expiresDateCookie,
       });
       // recupere la bbox de la fenetre de son pc
-      const extent = view.calculateExtent(map.getSize());
+      const extent = view.calculateExtent(mapInstance.getSize());
 
       // Efface les anciens polygones et blocs
       vectorSourceGridDalle.clear();
@@ -832,7 +830,7 @@ export const App = (props) => {
           ...MapState,
           selectedMode: handle_mode_change(
             { target: { value: "click" } },
-            map,
+            mapInstance,
             MapState.selectedMode,
             selectInteractionClick,
             drawPolygon,
@@ -842,6 +840,7 @@ export const App = (props) => {
         generate_multipolygon_bloc(drawnBlocsLayer);
       }
     });
+    setMapInstance(mapInstance);
   };
 
   return (

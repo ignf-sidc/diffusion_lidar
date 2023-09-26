@@ -2,9 +2,8 @@
 function zoom_to_polygon(item, niv_zoom,mapInstance)  {
     if (item){
         const polygon_extent = item.values_.geometry.extent_
-        const map = mapInstance
-        map.getView().fit(polygon_extent, { padding: [50, 50, 50, 50] });
-        map.getView().setZoom(niv_zoom);
+        mapInstance.getView().fit(polygon_extent, { padding: [50, 50, 50, 50] });
+        mapInstance.getView().setZoom(niv_zoom);
     }
 }
 
