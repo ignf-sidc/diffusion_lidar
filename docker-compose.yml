@@ -28,7 +28,7 @@ services:
       - PGPORT=${PGPORT}
       - PGHOST=${PGHOST}
     ports:
-      - "1005:8000"
+      - "8000:8000"
     networks:
      - api
     depends_on:
@@ -47,7 +47,7 @@ services:
       - './frontend:/usr/app'
       - '/frontend/node_modules'
     ports:
-      - 1006:3000
+      - 3000:3000
     env_file:
       - .env
     environment:
