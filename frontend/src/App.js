@@ -120,9 +120,9 @@ class App extends Component {
         // fonction qui surpprime toutes les dalles d'un polygon supprimer
         // liste qui va nous permettre de stocker les dalles qu'on veut supprimer
         var liste_dalle_remove = []
-        // on boucle sur toutes les dalles selctionner
+        // on boucle sur toutes les dalles selectionner
         this.dalles_select.forEach(dalle => {
-            // si les dalles appartiennent au polygon alors on les ajouter à la liste liste_dalle_remove
+            // si les dalles appartiennent au polygon alors on les ajoute à la liste liste_dalle_remove
             if (dalle.values_.properties.polygon === polygon.values_.id) {
                 liste_dalle_remove.push(dalle)
                 // on filtre sur les polygons pour recuperer ceux qui sont dans le polygon et enlever leur style select pour remettre celui de base
@@ -140,13 +140,14 @@ class App extends Component {
 
     remove_dalle_menu = (index, dalle_remove, polygon=null) => {
         // fonction qui permet de déselectionner une dalle et de remettre son style à jours
+        // si l'index de la dalle dans la liste n'est pas specifier, alors on la recupere 
         if (index === null) {
             index = this.dalles_select.indexOf(dalle_remove)
         }
         // on parcourt la liste des dalles et non celle des dalles selectionner car quand la carte bouge une nouvelle dalle est creer
         // et donc il nous faut recuperer la dalle actuel et non l'ancienne qui certes est au meme endroit mais a des propriétés différentes
         this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
-            // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
+            // si la dalle que l'on veut deselectionner est dans la liste des vecteurs (afficher sur la carte) de la page alors on enleve le style
             if (feature.values_.properties.id === dalle_remove.values_.properties.id) {
                 feature.setStyle(null);
             }
@@ -154,7 +155,9 @@ class App extends Component {
         // on supprime la dalle de la liste
         this.dalles_select.splice(index, 1);
 
+        // on met à jours le state dalles_select
         this.setState({ dalles_select: this.dalles_select });
+        // permet de mettre à jours la liste des dalles qui sont dans des polygons, et d'ouvrir ou non le cheuvron
         if (polygon != null) {
             this.list_dalle_in_polygon(polygon, "open")
         }else{
@@ -165,18 +168,16 @@ class App extends Component {
     remove_polygon_menu = (polygon_remove) => {
         // fonction qui permet de supprimer un polygon 
 
-        // on parcourt la liste des polygons et on surppimer le polygon en question du layer
+        // on parcourt la liste des polygons et on surppime le polygon en question du layer
         this.drawnPolygonsLayer.getSource().getFeatures().forEach((feature) => {
-            // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
             if (feature.values_.id === polygon_remove.values_.id) {
-                // Supprimer la fonctionnalité du source du layer
+                // Suppression du polygon
                 this.vectorSourceDrawPolygon.removeFeature(feature);
             }
             // on lance la fonction qui supprime les dalles du polygons supprimer
             this.remove_dalle_in_polygon(polygon_remove)
         });
-
-
+        // on met à jours les state de dalle selectionner et de polygon dessiner
         this.setState({ dalles_select: this.dalles_select });
         this.setState({ polygon_drawn: this.drawnPolygonsLayer });
     };
@@ -185,7 +186,7 @@ class App extends Component {
         // fonction lancer pour supprimer toutes les dalles
         // on parcourt la liste des dalles dans la fenetre pour remettre leur design de base
         this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
-            // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on enleve le style
+            // si la dalle que l'on veut deselectionner est dans la liste des vecteurs de la page alors on remet le style de base
             if (feature.getStyle() !== null) {
                 feature.setStyle(null);
             }
@@ -205,6 +206,7 @@ class App extends Component {
         // on parcourt la liste des polygons 
         this.drawnPolygonsLayer.getSource().getFeatures().forEach((polygon) => {
             // on lance la fonction qui supprime les dalles du polygons supprimer (donc tous les polygons dans cette fonction)
+            // attention ça ne veut pas dire qu'on supprime toutes les dalles, il y'en a qui peuvent etre selectioner au click
             this.remove_dalle_in_polygon(polygon)
         });
         // on met la liste des polygons à 0
@@ -218,7 +220,9 @@ class App extends Component {
     }
 
     zoom_to_polygon = (item, niv_zoom) => {
+      // fonction qui permet de zoomer sur un polygon ou une dalle (le terme openlayer pour une dalle est polygon)
         if (item){
+          // recuperation de l'extent de du polygon
             const polygon_extent = item.values_.geometry.extent_
             const map = this.state.mapInstance
             map.getView().fit(polygon_extent, { padding: [50, 50, 50, 50] });
@@ -227,6 +231,7 @@ class App extends Component {
     }
 
     zoom_to_multi_polygon = (item) => {
+      // fonction qui permet de zoomer sur un multi_polygon, n'est utiliser que pour l'import de fichier
         let extent = item[0].getExtent();
         for (let i = 1; i < item.length; i++) {
             extent = extent.concat(item[i].getExtent());
@@ -237,8 +242,11 @@ class App extends Component {
 
     list_dalle_in_polygon = (polygon, statut) => {
         // fonction qui permet de lister les dalles 
+        // si le statut est open ça veut dire que le cheuvron du polygon en question est ouvert on doit donc lister ses dalles
         if (statut == "open") {
+          // liste ou on stockera les dalles du polygon
             var list_dalle_in_polygon = []
+            // on parcout la liste des dalles selectionner pour recuperer celle qui sont dans le polygon
             this.dalles_select.forEach(dalle_select => {
                 if (dalle_select.values_.properties.polygon == polygon.values_.id) {
                     list_dalle_in_polygon.push(dalle_select)
@@ -251,12 +259,13 @@ class App extends Component {
             }else{
                 this.setState({ polygon_select_list_dalle: { "polygon": polygon, "dalles": list_dalle_in_polygon } })
             }
+        // si le statut est close, alors on verifie juste que le polygon a encore au moins 1 dalle pour savoir si on doit le supprimer ou non 
         } else {
              // on parcourt la liste des polygons 
             this.drawnPolygonsLayer.getSource().getFeatures().forEach((feature) => {
-                // boolean qui va qu'on va mettre a false si le polygon a 1 dalle dans son emprise
+                // boolean qui va qu'on va mettre a false si le polygon a 1 dalle ou plus dans son emprise
                 let polygonIsEmpty = true
-                // on parcourt la liste des dalles selctionner pour verifier si le polygon à encore au moins 1 dalle dans son emprise
+                // on parcourt la liste des dalles selectionner pour verifier si le polygon à encore au moins 1 dalle dans son emprise
                 this.dalles_select.forEach(dalle_select => {
                    // si une dalle est dans l'emprise du polygon alors on passe polygonIsEmpty a false
                     if (dalle_select.values_.properties.polygon === feature.values_.id) {
@@ -295,9 +304,10 @@ class App extends Component {
     };
 
     pointerMoveDalleMenu = (id_dalle) => {
+      // fonction permettant de colorier une dalle quand on la survole dans le menu
         // on parcours la liste des dalles
         this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
-            // son recupere la feature avec la meme id que la dalle survolé dans le menu
+            // on recupere la feature avec la meme id que la dalle survolé dans le menu et on lui assigne le style pointer_move_dalle_menu
             if (feature.values_.properties.id === id_dalle) {
                 feature.setStyle(new Style(this.style_dalle.pointer_move_dalle_menu))
             }
@@ -305,9 +315,11 @@ class App extends Component {
     }
 
     quitPointerMoveDalleMenu = (id_dalle) => {
+       // fonction permettant de decolorer une dalle quand on quitte le survole d'une dalle dans le menu
         // on parcours la liste des dalles
         this.vectorSourceGridDalle.getFeatures().forEach((feature) => {
-            // son recupere la feature avec la meme id que la dalle survolé dans le menu
+            // on recupere la feature avec la meme id que la dalle survolé dans le menu et on lui applique le style select car la dalle est forcement selectionner
+            // pour être survolé dans le menu
             if (feature.values_.properties.id === id_dalle) {
                 feature.setStyle(new Style(this.style_dalle.select))
             }
@@ -355,9 +367,9 @@ class App extends Component {
 
     handleUpload = (info) => {
         // fonction appeller lorsqu'on clique sur le bouton pour importer un fichier qui contient un polygon ou multipolygon
-        const file = info.file
-        // fonction lancer quand on clique sur le bouton pour upload un fichier si l'on a pas supprimer l'ancien 
         // permet pour l'instant d'importer qu'un seul fichier
+        const file = info.file
+        // en cas d'import d'un nouveau fichier sachant qu'on en a deja importer un, on supprime l'ancien 
         this.handleUploadRemove()
         // si le fichier est bien importer sans erreur
         if (file.status === 'done') {
@@ -373,6 +385,7 @@ class App extends Component {
                     polygonGeometries = file_geojson.coordinates.map(coords => new Polygon(coords));
                     // on convertit nos coordonnées en multipolygon openlayer
                     multiPolygonFeature = new Feature({geometry: new MultiPolygon(file_geojson.coordinates)});
+                // si c'est un polygon
                 }else{
                     // on convertit nos coordonnées en polygon openlayer
                     multiPolygonFeature = new Feature({geometry: new Polygon(file_geojson.coordinates)});
@@ -383,7 +396,7 @@ class App extends Component {
                 multiPolygonFeature.setProperties({
                     id: id
                 });
-                // Ajoutez du polygons à la couche vecteur
+                // Ajout du polygons à la couche vecteur
                 this.vectorSourceFilePolygon.addFeature(multiPolygonFeature);
                 this.vectorSourceDrawPolygon.addFeature(multiPolygonFeature)
                 // le zoom est différent si c'est un polygon ou un mutlipolygon
@@ -416,8 +429,10 @@ class App extends Component {
     
     handleUploadRemove = () =>{
         // fonction appellé lorsqu'on supprime le fichier telecharger
+        // on recupere le polygon ou multiploygon, vu qu'on ne peut importer qu'un fichier pour l'instant, c'est forcement le premier element de la liste
         const polygon = this.vectorSourceFilePolygon.getFeatures()[0];
         if(polygon){
+          // on supprime toutes les dalles du polygon
             this.remove_dalle_in_polygon(polygon)
             this.setState({ dalles_select: this.dalles_select });
             // Efface les polygones de la couche
@@ -434,6 +449,7 @@ class App extends Component {
 
     dalle_select_max_alert = (emprise, feature) =>{
         // fonction qui permet de limiter les dalles à 2500km
+        // emprise etant le type de selection
         if (this.state.dalles_select.length >= this.limit_dalle_select){
             if (emprise == "polygon"){
                 this.remove_dalle_in_polygon(feature)
@@ -452,10 +468,15 @@ class App extends Component {
     }
 
     generate_multipolygon_bloc = () => {
+      // fonction qui genere les blocs et qui est appellé à chaque fois qu'on bouge la carte, à un certain niveau de zoom
+      // on fais appelle à l'api pour recuperer les blocs
         axios.get(`${this.state.api_url}:8000/data/get/blocs`)
             .then(response => {
+              // etant donner qu'on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
                 this.drawnBlocsLayer.getSource().clear();
+                // on parcours notre liste de blocs
                 response.data.result.features.forEach(bloc => {
+                  // on trace nos bblocs
                     const multiPolygonFeature = new Feature({geometry: new MultiPolygon(bloc.geometry.coordinates)});
                     multiPolygonFeature.setProperties({
                         id: bloc.properties.Nom_bloc,
@@ -467,6 +488,8 @@ class App extends Component {
     }
 
     handleTelechargement = () => {
+      // fonction qui va permettre de telecharger le fichier txt avec son contenu
+      // variable qui aura le contenu
         let contentTxt = ""
         // ajout de chaque dalle dans le contenu du txt
         this.dalles_select.forEach(dalle => {
@@ -490,6 +513,7 @@ class App extends Component {
       };
 
     componentDidMount() {
+      // déclaration de la projection lamb93
         proj4.defs("EPSG:2154", "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
         register(proj4);
         
@@ -523,6 +547,7 @@ class App extends Component {
                 })
             });
 
+            // on recupere le debut de l'url de l'api 
             const appProtocol = window.location.protocol; 
             const appHostname = window.location.hostname; 
             this.setState({ api_url: `${appProtocol}//${appHostname}` });
@@ -696,6 +721,7 @@ class App extends Component {
 
 
             const mouseMoveListener = (event) => {
+              // permet de recuperer les coordonnées de la souris 
                 const pixel = map.getEventPixel(event.originalEvent);
                 const lonLat = map.getCoordinateFromPixel(pixel);
                 this.setState({ coor_mouse: lonLat });
