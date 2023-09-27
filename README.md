@@ -3,9 +3,9 @@
 ## Installation 
 
 Avant de commencer, assurez-vous d'avoir Docker installé et configuré avec le proxy :\
-installation : [Instructions d'installation Docker](http://gitlab.dev-arch-diff.ign.fr/vsasyan/install/tree/master#docker) (bien sélectionné l'os lien pour Debian)\
-gestion du proxy pour docker : [Guide de configuration du proxy Docker](https://mborne.github.io/cours-devops/annexe/proxy-sortant/proxy-docker).\
-docker sans le sudo : [Gestion de Docker en tant qu'utilisateur non root](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user)
+`installation` : [Instructions d'installation Docker](http://gitlab.dev-arch-diff.ign.fr/vsasyan/install/tree/master#docker) (bien sélectionné l'os lien pour Debian)\
+`gestion du proxy pour docker` : [Guide de configuration du proxy Docker](https://mborne.github.io/cours-devops/annexe/proxy-sortant/proxy-docker).\
+`docker sans le sudo` : [Gestion de Docker en tant qu'utilisateur non root](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user)
 
 git clone le projet
 ```
@@ -18,9 +18,9 @@ Si vous récupérez encore des blocs et dalles depuis S3, vous devrez remplir la
 ```
 
 Une fois que docker-compose est en cours d'exécution, vous pouvez développer normalement. Pour accéder aux ressources, utilisez les liens suivants :\
-pour consulter l'api : http://localhost:8000/docs \
-pour consulter l'interface  : http://localhost:3000 \
-pour consulter la base de données : http://localhost:8080
+`pour consulter l'api` : http://localhost:8000/docs \
+`pour consulter l'interface`  : http://localhost:3000 \
+`pour consulter la base de données` : http://localhost:8080
 
 Avant de push coté backend verifier black, pylint, et tests unitaires si tu en a fais des nouveaux
 
