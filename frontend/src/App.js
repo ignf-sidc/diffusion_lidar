@@ -108,18 +108,24 @@ export const App = (props) => {
     },
   };
 
-  const [mapInstance, setMapInstance] = useState(
-    new Map({
-      target: "map",
-      layers: [],
-      view: new View({
-        projection: getProjection("EPSG:2154"),
-        center: MapState.cookie_coor_start,
-        zoom: MapState.cookie_zoom_start,
-        maxZoom: 16,
-      }),
-    })
-  );
+  const mapInstance = new Map({
+    target: "map",
+    layers: [],
+    view: new View({
+      projection: getProjection("EPSG:2154"),
+      center: MapState.cookie_coor_start,
+      zoom: MapState.cookie_zoom_start,
+      maxZoom: 16,
+    }),
+  });
+
+  const overlay = new Overlay({
+    element: document.getElementById("popup"),
+    autoPan: false,
+    autoPanAnimation: {
+      duration: 250,
+    },
+  });
 
   const style_dalle_select = (feature, MapState) => {
     // fonction permettant d'ajuster le style au survol d'une dalle
@@ -257,7 +263,7 @@ export const App = (props) => {
     const id = `${type}-${feature
       .getGeometry()
       .getExtent()
-      .mapInstance((point) => Math.round(point / 1000))
+      .map((point) => Math.round(point / 1000))
       .join("-")}`;
     feature.setProperties({
       id: id,
@@ -326,7 +332,7 @@ export const App = (props) => {
     return (
       <div>
         <div className="outer-div">
-          {MapState.dalles_select.mapInstance((item, index) => (
+          {MapState.dalles_select.map((item, index) => (
             <div className="liste_dalle inner-div" key={index}>
               <button
                 className="map-icon-button"
@@ -544,17 +550,20 @@ export const App = (props) => {
 
       const appProtocol = window.location.protocol;
       const appHostname = window.location.hostname;
-      setApi_url(`${appProtocol}//${appHostname}`)
+      setApi_url(`${appProtocol}//${appHostname}`);
       console.log(api_url);
 
       const onSuccess = (config) => {
         // Traitement réussi ici
         createMap(
           MapState,
-          dalleLayer,
-          drawnBlocsLayer,
-          zoom,
           mapInstance,
+          zoom,
+          dalleLayer,
+          drawnPolygonsLayer,
+          filePolygonsLayer,
+          drawnBlocsLayer,
+          overlay
         );
       };
 
@@ -572,24 +581,32 @@ export const App = (props) => {
         onFailure,
       });
     }
-  }, []);
+  }, [api_url]);
 
   const createMap = (
     MapState,
-    dalleLayer,
-    drawnBlocsLayer,
-    zoom,
     mapInstance,
+    zoom,
+    dalleLayer, // Ajout de la couche qui affichera les polygons
+    drawnPolygonsLayer, // ajout de la couche qui affichera le polygon pour séléectionner des dalles
+    filePolygonsLayer, // ajout de la couche qui affichera le polygon d'un fichier geojson ou shp
+    drawnBlocsLayer,
+    overlay
   ) => {
-
     console.log("hello");
-     
-    mapInstance.addLayer(
+
+    let layers = mapInstance.getLayers()
+    layers.extend([
       new olExtended.layer.GeoportalWMTS({
         layer: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
-      }));
-    setMapInstance(mapInstance)
-    console.log(mapInstance.getLayers());
+      }),
+      dalleLayer, // Ajout de la couche qui affichera les polygons
+      drawnPolygonsLayer, // ajout de la couche qui affichera le polygon pour séléectionner des dalles
+      filePolygonsLayer, // ajout de la couche qui affichera le polygon d'un fichier geojson ou shp
+      drawnBlocsLayer, // ajout de la couche qui affichera les blocs
+    ])
+    console.log('estend');
+
 
     const search = new olExtended.control.SearchEngine({ zoomTo: 12 });
     mapInstance.addControl(search);
@@ -738,6 +755,8 @@ export const App = (props) => {
         overlay.getElement().innerHTML = selectedFeature["values_"]["id"];
         overlay.setPosition([centerX, centerY]);
         overlay.getElement().style.display = "block";
+
+        console.log(overlay.getElement().innerHTML);
       }
     });
 
@@ -756,13 +775,6 @@ export const App = (props) => {
     mapInstance.addInteraction(selectInteractionBloc);
 
     // Créer une couche pour afficher les informations de la dalle survolée
-    const overlay = new Overlay({
-      element: document.getElementById("popup"),
-      autoPan: false,
-      autoPanAnimation: {
-        duration: 250,
-      },
-    });
 
     // Ajoutez la couche à la carte
     mapInstance.addOverlay(overlay);
@@ -840,7 +852,6 @@ export const App = (props) => {
         generate_multipolygon_bloc(drawnBlocsLayer);
       }
     });
-    setMapInstance(mapInstance);
   };
 
   return (
