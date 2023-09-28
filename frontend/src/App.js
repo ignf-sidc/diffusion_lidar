@@ -809,7 +809,7 @@ export const App = (props) => {
 
         axios
           .get(
-            `${MapState.api_url}:8000/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
+            `${api_url}:8000/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
           )
           .then((response) => {
             response.data.result.forEach((dalle) => {
