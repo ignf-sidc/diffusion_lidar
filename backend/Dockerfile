@@ -1,4 +1,4 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
+FROM python3.9
 
 RUN mkdir -p /backend
 WORKDIR /backend

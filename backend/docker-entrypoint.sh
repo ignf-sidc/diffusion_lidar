@@ -2,4 +2,4 @@
 
 # python3 ./api/app/adapters/migration.py
 
-uvicorn api.app.main:app --proxy-headers --host 0.0.0.0 --port 8000 --reload
+uvicorn api.app.main:app --proxy-headers --host 0.0.0.0 --port 80 --reload
