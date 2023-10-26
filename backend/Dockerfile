@@ -5,6 +5,6 @@ WORKDIR /backend
 
 COPY . .
 
-RUN pip3 install  --no-cache-dir --upgrade  -r requirements.txt
+RUN pip3 install  --upgrade  -r requirements.txt
 
-CMD [ "uvicorn api.app.main:app --proxy-headers --host 0.0.0.0 --port 80 --reload" ]
+ENTRYPOINT ["/bin/bash", "./docker-entrypoint.sh"]
