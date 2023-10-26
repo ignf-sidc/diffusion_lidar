@@ -470,7 +470,7 @@ class App extends Component {
     generate_multipolygon_bloc = () => {
       // fonction qui genere les blocs et qui est appellé à chaque fois qu'on bouge la carte, à un certain niveau de zoom
       // on fais appelle à l'api pour recuperer les blocs
-        axios.get(`${this.state.api_url}:8000/data/get/blocs`)
+        axios.get(`${this.state.api_url}/api/data/get/blocs`)
             .then(response => {
               // etant donner qu'on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
                 this.drawnBlocsLayer.getSource().clear();
@@ -773,7 +773,7 @@ class App extends Component {
                     var maxX = extent[2];
                     var maxY = extent[3];
 
-                    axios.get(`${this.state.api_url}:8000/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`)
+                    axios.get(`${this.state.api_url}/api/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`)
                     .then(response => {
                         response.data.result.forEach(dalle => {
                             const dalle_polygon = JSON.parse(dalle.polygon)
@@ -952,7 +952,7 @@ class App extends Component {
                                         <Upload
                                         maxCount={1}
                                         accept=".geojson"
-                                        action={`${this.state.api_url}:8000/upload/geojson`}
+                                        action={`${this.state.api_url}/api/upload/geojson`}
                                         onChange={this.handleUpload}
                                         onRemove={this.handleUploadRemove}
                                         >
