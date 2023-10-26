@@ -1,4 +1,4 @@
-FROM python3.9
+FROM python:3.9
 
 RUN mkdir -p /backend
 WORKDIR /backend
