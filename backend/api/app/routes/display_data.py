@@ -4,7 +4,7 @@ from api.app.adapters.dalle_lidar_classe import get_blocs_classe, get_connexion_
 from dotenv import load_dotenv
 
 router = APIRouter(
-    prefix="api/data",
+    prefix="/api/data",
     tags=["affichage des données"],
     responses={404: {"description": "Not found"}},
 )
