@@ -3,10 +3,14 @@ from fastapi.responses import JSONResponse
 from api.app.adapters.dalle_lidar_classe import get_blocs_classe, get_connexion_bdd
 from dotenv import load_dotenv
 
-router = APIRouter()
+router = APIRouter(
+    prefix="api/data",
+    tags=["affichage des données"],
+    responses={404: {"description": "Not found"}},
+)
 
 
-@router.get("api/get/blocs")
+@router.get("/get/blocs")
 def get_blocs():
     """route qui retourne les blocs disponibles
 
@@ -17,7 +21,7 @@ def get_blocs():
     return JSONResponse(content={"result": blocs, "count_bloc": len(blocs["features"])})
 
 
-@router.get("api/get/dalles/{x_min}/{y_min}/{x_max}/{y_max}")
+@router.get("/get/dalles/{x_min}/{y_min}/{x_max}/{y_max}")
 def get_dalle_lidar_classe_2(
     x_min: float = None, y_min: float = None, x_max: float = None, y_max: float = None
 ):
