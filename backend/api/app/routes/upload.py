@@ -4,7 +4,7 @@ from api.app.adapters.ExtractDataFile import ExtractDataFile
 router = APIRouter()
 
 
-@router.post("/geojson")
+@router.post("api/geojson")
 async def upload_file_geojson(file: UploadFile = File(...)):
     """route qui prend en entré un geojson et qui renvoie l'emprise de ce geojson
 

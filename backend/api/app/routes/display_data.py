@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 router = APIRouter()
 
 
-@router.get("/get/blocs")
+@router.get("api/get/blocs")
 def get_blocs():
     """route qui retourne les blocs disponibles
 
@@ -17,7 +17,7 @@ def get_blocs():
     return JSONResponse(content={"result": blocs, "count_bloc": len(blocs["features"])})
 
 
-@router.get("/get/dalles/{x_min}/{y_min}/{x_max}/{y_max}")
+@router.get("api/get/dalles/{x_min}/{y_min}/{x_max}/{y_max}")
 def get_dalle_lidar_classe_2(
     x_min: float = None, y_min: float = None, x_max: float = None, y_max: float = None
 ):
