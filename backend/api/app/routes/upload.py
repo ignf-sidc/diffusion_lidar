@@ -1,11 +1,7 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from api.app.adapters.ExtractDataFile import ExtractDataFile
 
-router = APIRouter(
-    prefix="/upload",
-    tags=["upload"],
-    responses={404: {"description": "Not found"}},
-)
+router = APIRouter()
 
 
 @router.post("/geojson")
