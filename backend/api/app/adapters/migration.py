@@ -157,7 +157,7 @@ class BucketAdapter:
         dalles: list[dict[str, Any]] = []
         for feature in bloc_data["features"]:
             dalle: dict[str, Any] = {
-                "name": f"{self.link_download}/{feature['properties']['file']}",
+                "name": f"{self.link_download}/{bloc}/{feature['properties']['file']}",
                 "geom": shape(feature["geometry"]),
             }
             dalles.append(dalle)
