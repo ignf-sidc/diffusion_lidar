@@ -839,7 +839,7 @@ class App extends Component {
 
         const list_polygons = (
             <div>
-            <h4 style={{margin: "0"}}>Nombre de polygons séléctionnées : {features.length}</h4>
+            <h4 style={{margin: "0"}}>Nombre de séléctions : {features.length}</h4>
             <div className="outer-div">
                 {features.map((polygon, index) => (
                 <div key={index}>
@@ -898,7 +898,7 @@ class App extends Component {
           const items_collapse_liste_polygons = [
             {
                 key: '1',
-                label: 'Liste des polygons',
+                label: 'Liste des Séléctions',
                 children: list_polygons, 
                 extra: <DeleteOutlined style={{ color: 'red' }} onClick={this.remove_all_polygons_menu}/>
             }
@@ -911,21 +911,21 @@ class App extends Component {
                 children: list_dalles,
                 extra: <DeleteOutlined style={{ color: 'red' }} onClick={this.remove_all_dalle_menu}/>, 
             },
-            {
-                key: '2',
-                label: 'Liste des MNS',
-                children: <p>données pas encore disponible</p>, 
-            },
-            {
-                key: '3',
-                label: 'Liste des MNT',
-                children: <p>données pas encore disponible</p>, 
-            },
-            {
-                key: '4',
-                label: 'Autres',
-                children: <p>données pas encore disponible</p>, 
-            },
+            // {
+            //     key: '2',
+            //     label: 'Liste des MNS',
+            //     children: <p>Donnée non disponible.</p>, 
+            // },
+            // {
+            //     key: '3',
+            //     label: 'Liste des MNT',
+            //     children: <p>Donnée non disponible.</p>, 
+            // },
+            // {
+            //     key: '4',
+            //     label: 'Autres',
+            //     children: <p>Donnée non disponible.</p>, 
+            // },
           ];
 
 
@@ -942,11 +942,11 @@ class App extends Component {
                     
                     {this.state.zoom >= this.zoom_dispaly_dalle ? (
                         <div className='menu_mode'>
-                            <Card title="Choix du mode de séléction" >
+                            <Card title="Choix du mode de sélection" >
                                 <Space direction="vertical" style={{ width: '100%' }} size="large"> 
                                     <Radio.Group onChange={this.handleModeChange} value={this.state.selectedMode}>
-                                        <Radio value={'click'}>Click</Radio>
-                                        <Radio value={'polygon'}>Polygon</Radio>
+                                        <Radio value={'click'}>Clic</Radio>
+                                        <Radio value={'polygon'}>Polygone</Radio>
                                         <Radio value={'rectangle'}>Rectangle</Radio>
                                     </Radio.Group>
                                         <Upload
@@ -956,7 +956,7 @@ class App extends Component {
                                         onChange={this.handleUpload}
                                         onRemove={this.handleUploadRemove}
                                         >
-                                        <Button icon={<UploadOutlined />}>Upload Geojson</Button>
+                                        <Button icon={<UploadOutlined />}>Téléverser un GéoJSON (en lambert 93)</Button>
                                         </Upload>
                                 </Space>
                             </Card>
@@ -969,7 +969,7 @@ class App extends Component {
                                     onClick={this.handleTelechargement} 
                                     type="default" icon={<DownloadOutlined />} 
                                     size="large" 
-                                    >Télécharger liste des dalles</Button>
+                                    >Télécharger la liste des dalles</Button>
                                 </div>
                             ) : (
                                 null
