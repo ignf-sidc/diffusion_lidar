@@ -10,7 +10,8 @@
 # paths.
 ignore=
     CVS,
-    .git
+    .git,
+    .venv
 
 # Add files or directories matching the regex patterns to the blacklist. The
 # regex matches against base names, not paths.
@@ -18,6 +19,7 @@ ignore-patterns=
     config_tests_non_regression,
     config,
     .vscode,
+    .venv
 
 # Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
 # number of processors available to use.

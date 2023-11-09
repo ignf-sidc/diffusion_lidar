@@ -32,7 +32,7 @@ services:
         - http_proxy
         - https_proxy
     volumes:
-      - '../../backend/api:/usr/app/api'
+      - '../../backend:/usr/app/backend'
     env_file:
       - .env
     environment:

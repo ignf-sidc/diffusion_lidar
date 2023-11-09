@@ -1,0 +1,12 @@
+.gitignore
+.github
+docker-compose.yml
+Dockerfile
+README.md
+venv
+node_modules
+.vscode
+.pytest_cache
+.pylintrc
+__pycache__
+tests

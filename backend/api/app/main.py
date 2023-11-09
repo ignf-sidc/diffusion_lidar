@@ -1,5 +1,3 @@
-import os
-
 # pylint: disable=import-error
 from fastapi import FastAPI
 
@@ -7,15 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
+from api.app.routes import test, upload, display_data
 
 load_dotenv()
-
-origins = [
-    f"http://{ os.environ.get('REACT_APP_HOST_API')}:3000",
-    f"{ os.environ.get('REACT_APP_HOST_API')}:3000",
-    "http://frontend:3000",
-    "frontend:3000",
-]
 
 tags_metadata = [{"name": "hello_world", "description": "route test"}]
 
@@ -29,18 +21,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-@app.get("/hello_world")
-def hello_world():
-    """route test
-
-    Returns:
-        dict: retourne un message test
-    """
-    return {"hello": "world"}
+app.include_router(test.router)
+app.include_router(upload.router)
+app.include_router(display_data.router)
