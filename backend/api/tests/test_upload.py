@@ -25,13 +25,13 @@ def test_upload_file_geojson_success():
     }
     geojson_bytes = io.BytesIO(json.dumps(geojson_data).encode())
     response = client.post(
-        "/upload/geojson",
+        "/api/upload/geojson",
         files={"file": ("test.geojson", geojson_bytes, "application/json")},
     )
     assert response.status_code == 200
     assert response.json() == {
         "polygon": '{"type": "Polygon", "coordinates": [[[0.0, 0.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]]]}',
-        "message": "succés du téléchargement. Superficie : 5e-07",
+        "message": "succés du téléchargement. Superficie : 0.0 km²",
         "statut": "success",
     }
 
@@ -45,7 +45,7 @@ def test_upload_geojson_invalid_geometry_type():
         ],
     }
     response = client.post(
-        "/upload/geojson", files={"file": ("data.geojson", json.dumps(geojson_data))}
+        "api/upload/geojson", files={"file": ("data.geojson", json.dumps(geojson_data))}
     )
     assert response.status_code == 500
 
@@ -53,7 +53,7 @@ def test_upload_geojson_invalid_geometry_type():
 def test_upload_txt_file():
     """test si la route upload un fichier autre que geojson, alors ça renvoie une erreur"""
     txt_data = "txt"
-    response = client.post("/upload/geojson", files={"file": ("data.txt", txt_data)})
+    response = client.post("api/upload/geojson", files={"file": ("data.txt", txt_data)})
     # pylint: disable=unexpected-line-ending-format
     # pylint: disable=missing-final-newline
     assert response.status_code == 500
@@ -75,7 +75,7 @@ def test_upload_file_geojson_limite_km_max():
     }
     geojson_bytes = io.BytesIO(json.dumps(geojson_data).encode())
     response = client.post(
-        "/upload/geojson",
+        "api/upload/geojson",
         files={"file": ("test.geojson", geojson_bytes, "application/json")},
     )
     assert response.status_code == 200
