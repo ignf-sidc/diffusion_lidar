@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from api.app.adapters.dalle_lidar_classe import get_blocs_classe, get_connexion_bdd
 from dotenv import load_dotenv
@@ -34,7 +34,7 @@ def get_dalle_lidar_classe_2(
             f"SELECT name, ST_AsGeoJson(geom) as polygon FROM dalle WHERE geom && ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max})"
         )
         dalles = bdd.fetchall()
-        bdd.execute(f"SELECT count(id) FROM dalle")
+        bdd.execute("SELECT count(id) FROM dalle")
         count_dalle = bdd.fetchone()
         statut = "success"
         bdd.close()

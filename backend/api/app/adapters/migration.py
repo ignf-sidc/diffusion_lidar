@@ -125,7 +125,7 @@ class BucketAdapter:
             endpoint_url=os.environ.get("ENDPOINT"),
             region_name=os.environ.get("REGION"),
         )
-        self.bucket_name: str = str(os.environ.get("BUCKET", 'BUCKET_NOT_DEF'))
+        self.bucket_name: str = str(os.environ.get("BUCKET", "BUCKET_NOT_DEF"))
         self.link_download: str = "https://storage.sbg.cloud.ovh.net/v1/AUTH_63234f509d6048bca3c9fd7928720ca1/ppk-lidar"
 
     def list_blocs(self) -> list[str]:
@@ -198,10 +198,9 @@ class LoadData:
         Args:
             bloc (str): bloc à traiter
         """
-        tqdm.write(f'\nTraitement de {bloc}...')
+        tqdm.write(f"\nTraitement de {bloc}...")
 
         try:
-
             self.database.connection()
             self.database.init_database()
             # Listing des dalles
@@ -212,16 +211,23 @@ class LoadData:
                 polygon = MultiPolygon([polygon])
             # pour chaque polygone (du multi), on ne va récupérer que l'exterior ring et normaliser
             multi_polygon = MultiPolygon(
-                [Polygon(polygon.exterior.coords).normalize() for polygon in polygon.geoms]
+                [
+                    Polygon(polygon.exterior.coords).normalize()
+                    for polygon in polygon.geoms
+                ]
             )
             geom = dumps(multi_polygon)
-            tqdm.write(f' * {bloc} : {len(dalles)} dalles pour {int(area(multi_polygon)/1000000)} km².')
+            tqdm.write(
+                f" * {bloc} : {len(dalles)} dalles pour {int(area(multi_polygon)/1000000)} km²."
+            )
             # Insertion blocs + dalles
             self.database.insert(bloc, geom, dalles)
-            tqdm.write(f' * {bloc} : terminé')
+            tqdm.write(f" * {bloc} : terminé")
             self.database.close_connection()
         except ClientError:
-            tqdm.write(f" * {bloc} : fichier d'index introuvable. La livraison doit être en cours...")
+            tqdm.write(
+                f" * {bloc} : fichier d'index introuvable. La livraison doit être en cours..."
+            )
 
 
 if __name__ == "__main__":
