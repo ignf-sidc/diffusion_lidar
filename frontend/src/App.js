@@ -898,7 +898,7 @@ class App extends Component {
           const items_collapse_liste_polygons = [
             {
                 key: '1',
-                label: 'Liste des Séléctions',
+                label: 'Liste des séléctions',
                 children: list_polygons, 
                 extra: <DeleteOutlined style={{ color: 'red' }} onClick={this.remove_all_polygons_menu}/>
             }
@@ -994,7 +994,7 @@ class App extends Component {
                     {this.state.coor_mouse !== null ? (
                         <div>
                             <Card>
-                            <p style={{margin: "0",fontSize: '16px',fontWeight: 'bold'}} className='menu_mode center'>Coordonées : {Math.round(this.state.coor_mouse[0])} - {Math.round(this.state.coor_mouse[1])}</p>
+                            <p style={{margin: "0",fontSize: '16px',fontWeight: 'bold'}} className='menu_mode center'>Coordonnées : {Math.round(this.state.coor_mouse[0])} - {Math.round(this.state.coor_mouse[1])}</p>
                             </Card>
                             </div>
                         ) : ( null )}
