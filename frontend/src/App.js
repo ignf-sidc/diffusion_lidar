@@ -461,7 +461,7 @@ class App extends Component {
             else if (emprise == "click"){
                 this.remove_dalle_menu(null,feature)
             }    
-            message.error(`le nombre de dalles séléctionnées dépasse ${this.limit_dalle_select} km²`);
+            message.error(`le nombre de dalles sélectionnées dépasse ${this.limit_dalle_select} km²`);
             return false
         }
         return true
@@ -839,7 +839,7 @@ class App extends Component {
 
         const list_polygons = (
             <div>
-            <h4 style={{margin: "0"}}>Nombre de séléctions : {features.length}</h4>
+            <h4 style={{margin: "0"}}>Nombre de sélections : {features.length}</h4>
             <div className="outer-div">
                 {features.map((polygon, index) => (
                 <div key={index}>
@@ -898,7 +898,7 @@ class App extends Component {
           const items_collapse_liste_polygons = [
             {
                 key: '1',
-                label: 'Liste des séléctions',
+                label: 'Liste des sélections',
                 children: list_polygons, 
                 extra: <DeleteOutlined style={{ color: 'red' }} onClick={this.remove_all_polygons_menu}/>
             }
@@ -980,12 +980,12 @@ class App extends Component {
 
                     <div className="dalle-select">
                         {this.state.dalles_select.length === 0 ? (
-                            <h3 className="center">Aucune données séléctionnées.</h3>
+                            <h3 className="center">Aucune données sélectionnées.</h3>
                         ) : (
                             <React.Fragment>
                                 {this.state.dalles_select.length >= this.limit_dalle_select ? (
-                                    <h5 className="text_red">Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</h5>
-                                ) : (<h5>Nombre de dalles séléctionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</h5>)}
+                                    <h5 className="text_red">Nombre de dalles sélectionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</h5>
+                                ) : (<h5>Nombre de dalles sélectionnées : {this.state.dalles_select.length}/{this.limit_dalle_select}</h5>)}
                                 <Collapse items={items_collapse_liste_produit}></Collapse>
                             </React.Fragment>
                         )}
