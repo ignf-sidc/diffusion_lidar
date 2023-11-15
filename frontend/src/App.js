@@ -25,6 +25,9 @@ import { get as getProjection } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import proj4 from "proj4";
 
+import { Typography } from 'antd';
+
+const { Title } = Typography;
 class App extends Component {
   constructor(props) {
     super(props);
@@ -1050,6 +1053,8 @@ class App extends Component {
 
     return (
       <div>
+        
+        <Title level={5}>Ce site est en cours de dévloppment il s'agit d'une version Beta.</Title>
         <div className="map-container">
           <div id="map"></div>
           <div id="popup" className="ol-popup">
