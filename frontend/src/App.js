@@ -1008,7 +1008,7 @@ class App extends Component {
     const items_collapse_liste_polygons = [
       {
         key: "1",
-        label: "Liste des sélections",
+        label: "Liste des emprises",
         children: list_polygons,
         extra: (
           <DeleteOutlined
@@ -1095,7 +1095,7 @@ class App extends Component {
 
           <div className="dalle-select">
             {this.state.dalles_select.length === 0 ? (
-              <h3 className="center">Aucune données sélectionnées.</h3>
+              <h3 className="center">Aucune donnée sélectionnée.</h3>
             ) : (
               <React.Fragment>
                 {this.state.dalles_select.length >= this.limit_dalle_select ? (
