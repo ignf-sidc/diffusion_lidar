@@ -1053,8 +1053,7 @@ class App extends Component {
 
     return (
       <div>
-        
-        <Title level={5}>Ce site est en cours de dévloppment il s'agit d'une version Beta.</Title>
+        <Title level={5}>Site en cours de qualification.</Title>
         <div className="map-container">
           <div id="map"></div>
           <div id="popup" className="ol-popup">
