@@ -25,6 +25,9 @@ import { get as getProjection } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import proj4 from "proj4";
 
+import { Typography } from 'antd';
+
+const { Title } = Typography;
 class App extends Component {
   constructor(props) {
     super(props);
@@ -99,7 +102,7 @@ class App extends Component {
       },
       pointer_move_dalle_menu: {
         fill: new Fill({
-          color: "#1a951f",
+          color: "#e8f54a",
         }),
         stroke: new Stroke({
           color: "black",
@@ -1050,6 +1053,7 @@ class App extends Component {
 
     return (
       <div>
+        <Title level={5}>Site en cours de qualification.</Title>
         <div className="map-container">
           <div id="map"></div>
           <div id="popup" className="ol-popup">
