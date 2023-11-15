@@ -99,7 +99,7 @@ class App extends Component {
       },
       pointer_move_dalle_menu: {
         fill: new Fill({
-          color: "#1a951f",
+          color: "#e8f54a",
         }),
         stroke: new Stroke({
           color: "black",
