@@ -584,7 +584,7 @@ class App extends Component {
         target: "map",
         layers: [
           new olExtended.layer.GeoportalWMTS({
-            layer: "GEOGRAPHICALGRIDSYSTEMS.MAPS.OVERVIEW",
+            layer: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
           }),
           // new olExtended.layer.GeoportalWMTS({
           //     layer: "ORTHOIMAGERY.ORTHOPHOTOS",
