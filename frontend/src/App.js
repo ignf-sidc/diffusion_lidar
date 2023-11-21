@@ -584,7 +584,7 @@ class App extends Component {
         target: "map",
         layers: [
           new olExtended.layer.GeoportalWMTS({
-            layer: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
+            layer: "GEOGRAPHICALGRIDSYSTEMS.MAPS.OVERVIEW",
           }),
           // new olExtended.layer.GeoportalWMTS({
           //     layer: "ORTHOIMAGERY.ORTHOPHOTOS",
@@ -1053,7 +1053,7 @@ class App extends Component {
 
     return (
       <div>
-        <Title level={5}>Site en cours de qualification.</Title>
+        <Title level={5} style={{marginLeft: "auto", marginRight: "auto",justifyContent: "center"}}>Site en cours de qualification.</Title>
         <div className="map-container">
           <div id="map"></div>
           <div id="popup" className="ol-popup">

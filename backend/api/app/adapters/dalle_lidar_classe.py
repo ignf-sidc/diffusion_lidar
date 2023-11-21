@@ -47,7 +47,6 @@ def get_connexion_bdd():
             port=os.environ.get("PGPORT"),
         )
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        print(cur)
     except psycopg2.OperationalError as e:
         return False
     return cur

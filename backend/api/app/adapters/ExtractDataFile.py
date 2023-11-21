@@ -74,7 +74,6 @@ class ExtractDataFile:
             if multipolygons:
                 # Si des multipolygons sont présents, les fusionner en un seul multipolygon
                 merged_multipolygon = unary_union(multipolygons)
-                print(json.dumps(mapping(merged_multipolygon)))
                 return json.dumps(mapping(merged_multipolygon))
 
             if polygons:
