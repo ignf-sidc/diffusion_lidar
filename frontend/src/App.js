@@ -23,7 +23,8 @@ import {
 } from "@ant-design/icons";
 import { get as getProjection } from "ol/proj";
 import { register } from "ol/proj/proj4";
-import proj4 from "proj4";
+import proj4 from "proj4";:
+import {QuestionCircleOutlined} from "@ant-design/icons";
 
 import { Typography } from 'antd';
 
