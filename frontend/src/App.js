@@ -1051,6 +1051,22 @@ class App extends Component {
       // },
     ];
 
+    const infoDownload =(
+      <div>
+        <ul>
+          <li>Vous n'avez pas encore installé de plugin web de téléchargement massif comme downthemall : installez-le, c'est rapide et libre !</li>
+          <li>Vous avez installé un plugin web de téléchargement massif :</li>
+          <ul>
+            <li>téléchargement directement via l'interface : cliquer sur le polygone en question (ou bien sur le bouton "liste des nuages de points classés") pour afficher les dalles. Cliquer-droit sur une dalle au hasard, choisir "downthemall" et lancer le téléchargement à partir de l'interface qui vient de s'ouvrir.</li>
+            <li>téléchargement via le fichier texte : retrouver dans vos "téléchargements" la liste des URL des dalles intersectées par la figure saisie ou importée. Glisser-déposer le fichier sur votre navigateur : un onglet s'ouvre avec la liste des URL. Cliquer-droit et choisir "downthemall". L'interface de gestion des téléchargements s'ouvre. Lancer le téléchargement massif."</li>
+          </ul>
+
+    téléchargement directement via l'interface : cliquer sur le polygone en question (ou bien sur le bouton "liste des nuages de points classés") pour afficher les dalles. Cliquer-droit sur une dalle au hasard, choisir "downthemall" et lancer le téléchargement à partir de l'interface qui vient de s'ouvrir.
+    téléchargement via le fichier texte : retrouver dans vos "téléchargements" la liste des URL des dalles intersectées par la figure saisie ou importée. Glisser-déposer le fichier sur votre navigateur : un onglet s'ouvre avec la liste des URL. Cliquer-droit et choisir "downthemall". L'interface de gestion des téléchargements s'ouvre. Lancer le téléchargement massif."
+</ul>
+      </div>
+    )
+
     return (
       <div>
         <Title level={5}>Site en cours de qualification.</Title>
@@ -1078,7 +1094,7 @@ class App extends Component {
                     <Radio value={"polygon"}>Polygone</Radio>
                     <Radio value={"rectangle"}>Rectangle</Radio>
                   </Radio.Group>
-                  <Upload
+                  {/* <Upload
                     maxCount={1}
                     accept=".geojson"
                     action={`${this.state.api_url}/api/upload/geojson`}
@@ -1088,7 +1104,7 @@ class App extends Component {
                     <Button icon={<UploadOutlined />}>
                       Téléverser un GéoJSON (en lambert 93)
                     </Button>
-                  </Upload>
+                  </Upload> */}
                 </Space>
               </Card>
               <br />
@@ -1128,6 +1144,7 @@ class App extends Component {
               >
                 Télécharger la liste des liens
               </Button>
+              <Popover content={infoDownload}title="Information"><QuestionCircleOutlined /></Popover>
             </div>
           ) : null}
           {this.state.coor_mouse !== null ? (
