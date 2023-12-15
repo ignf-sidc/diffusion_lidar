@@ -1071,7 +1071,6 @@ class App extends Component {
 
     return (
       <div>
-        <Title level={5}>Site en cours de qualification.</Title>
         <div className="map-container">
           <div id="map"></div>
           <div id="popup" className="ol-popup">
@@ -1138,6 +1137,7 @@ class App extends Component {
 
           {this.state.dalles_select.length > 0 ? (
             <div className="center">
+            <Space>
               <Button
                 onClick={this.handleTelechargement}
                 type="default"
@@ -1146,7 +1146,8 @@ class App extends Component {
               >
                 Télécharger la liste des liens
               </Button>
-              <Popover content={infoDownload}title="Information"><QuestionCircleOutlined /></Popover>
+              <Popover content={infoDownload}title="Information"><QuestionCircleOutlined/></Popover>
+              </Space>
             </div>
           ) : null}
           {this.state.coor_mouse !== null ? (
