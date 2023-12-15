@@ -15,7 +15,7 @@ import { FaTimes, FaMapMarker } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import { BsChevronDown, BsChevronLeft } from "react-icons/bs";
 import { withCookies } from "react-cookie";
-import { Card, Radio, Space, Button, Upload, message, Collaps, Popover } from "antd";
+import { Card, Radio, Space, Button, Upload, message, Collapse, Popover } from "antd";
 import {
   UploadOutlined,
   DownloadOutlined,
