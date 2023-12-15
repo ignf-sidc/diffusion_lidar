@@ -20,6 +20,8 @@ import {
   UploadOutlined,
   DownloadOutlined,
   DeleteOutlined,
+  QuestionCircleOutlined
+
 } from "@ant-design/icons";
 import { get as getProjection } from "ol/proj";
 import { register } from "ol/proj/proj4";
