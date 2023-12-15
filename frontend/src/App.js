@@ -1062,10 +1062,7 @@ class App extends Component {
             <li>téléchargement directement via l'interface : cliquer sur le polygone en question (ou bien sur le bouton "liste des nuages de points classés") pour afficher les dalles. Cliquer-droit sur une dalle au hasard, choisir "downthemall" et lancer le téléchargement à partir de l'interface qui vient de s'ouvrir.</li>
             <li>téléchargement via le fichier texte : retrouver dans vos "téléchargements" la liste des URL des dalles intersectées par la figure saisie ou importée. Glisser-déposer le fichier sur votre navigateur : un onglet s'ouvre avec la liste des URL. Cliquer-droit et choisir "downthemall". L'interface de gestion des téléchargements s'ouvre. Lancer le téléchargement massif."</li>
           </ul>
-
-    téléchargement directement via l'interface : cliquer sur le polygone en question (ou bien sur le bouton "liste des nuages de points classés") pour afficher les dalles. Cliquer-droit sur une dalle au hasard, choisir "downthemall" et lancer le téléchargement à partir de l'interface qui vient de s'ouvrir.
-    téléchargement via le fichier texte : retrouver dans vos "téléchargements" la liste des URL des dalles intersectées par la figure saisie ou importée. Glisser-déposer le fichier sur votre navigateur : un onglet s'ouvre avec la liste des URL. Cliquer-droit et choisir "downthemall". L'interface de gestion des téléchargements s'ouvre. Lancer le téléchargement massif."
-</ul>
+          </ul>
       </div>
     )
 
