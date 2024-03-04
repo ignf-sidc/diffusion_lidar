@@ -15,26 +15,39 @@ import { FaTimes, FaMapMarker } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import { BsChevronDown, BsChevronLeft } from "react-icons/bs";
 import { withCookies } from "react-cookie";
-import { Card, Radio, Space, Button, Upload, message, Collapse, Popover } from "antd";
+import {
+  Card,
+  Radio,
+  Space,
+  Button,
+  Upload,
+  message,
+  Collapse,
+  Popover,
+  Modal,
+} from "antd";
 import {
   UploadOutlined,
   DownloadOutlined,
   DeleteOutlined,
-  QuestionCircleOutlined
-
+  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import { get as getProjection } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import proj4 from "proj4";
 
-import { Typography } from 'antd';
+import { Typography } from "antd";
 
 const { Title } = Typography;
+
 class App extends Component {
   constructor(props) {
     super(props);
+    // on défini un state pour savoir quand ouvrir la modal d'information TODO: Reprendre les définitions de state
+
     const { cookies } = props;
     this.state = {
+      isModalOpen: false,
       coordinate: null,
       showInfobulle: false,
       selectedFeatures: [],
@@ -113,6 +126,18 @@ class App extends Component {
       },
     };
   }
+
+  showModal = () => {
+    this.setState({ isModalOpen: true });
+  };
+
+  handleOk = () => {
+    this.setState({ isModalOpen: false });
+  };
+
+  handleCancel = () => {
+    this.setState({ isModalOpen: false });
+  };
 
   style_dalle_select(feature) {
     // fonction permettant d'ajuster le style au survol d'une dalle
@@ -1053,19 +1078,6 @@ class App extends Component {
       // },
     ];
 
-    const infoDownload =(
-      <div>
-        <ul>
-          <li>Vous n'avez pas encore installé de plugin web de téléchargement massif comme downthemall : installez-le, c'est rapide et libre !</li>
-          <li>Vous avez installé un plugin web de téléchargement massif :</li>
-          <ul>
-            <li>téléchargement directement via l'interface : cliquer sur le polygone en question (ou bien sur le bouton "liste des nuages de points classés") pour afficher les dalles. Cliquer-droit sur une dalle au hasard, choisir "downthemall" et lancer le téléchargement à partir de l'interface qui vient de s'ouvrir.</li>
-            <li>téléchargement via le fichier texte : retrouver dans vos "téléchargements" la liste des URL des dalles intersectées par la figure saisie ou importée. Glisser-déposer le fichier sur votre navigateur : un onglet s'ouvre avec la liste des URL. Cliquer-droit et choisir "downthemall". L'interface de gestion des téléchargements s'ouvre. Lancer le téléchargement massif."</li>
-          </ul>
-          </ul>
-      </div>
-    )
-
     return (
       <div>
         <div className="map-container">
@@ -1134,16 +1146,58 @@ class App extends Component {
 
           {this.state.dalles_select.length > 0 ? (
             <div className="center">
-            <Space>
-              <Button
-                onClick={this.handleTelechargement}
-                type="default"
-                icon={<DownloadOutlined />}
-                size="large"
-              >
-                Télécharger la liste des liens
-              </Button>
-              <Popover content={infoDownload}title="Information"><QuestionCircleOutlined/></Popover>
+              <Space>
+                <Button
+                  onClick={this.handleTelechargement}
+                  type="default"
+                  icon={<DownloadOutlined />}
+                  size="large"
+                >
+                  Télécharger la liste des liens
+                </Button>
+                <Button type="primary" onClick={this.showModal}>
+                  information
+                </Button>
+                <Modal
+                  title="Info téléchargement"
+                  open={this.state.isModalOpen}
+                  onOk={this.handleOk}
+                  onCancel={this.handleCancel}
+                >
+                  <div>
+                    <ul>
+                      <li>
+                        Vous n'avez pas encore installé de plugin web de
+                        téléchargement massif comme downthemall : installez-le,
+                        c'est rapide et libre !
+                      </li>
+                      <li>
+                        Vous avez installé un plugin web de téléchargement
+                        massif :
+                      </li>
+                      <ul>
+                        <li>
+                          téléchargement directement via l'interface : cliquer
+                          sur le polygone en question (ou bien sur le bouton
+                          "liste des nuages de points classés") pour afficher
+                          les dalles. Cliquer-droit sur une dalle au hasard,
+                          choisir "downthemall" et lancer le téléchargement à
+                          partir de l'interface qui vient de s'ouvrir.
+                        </li>
+                        <li>
+                          téléchargement via le fichier texte : retrouver dans
+                          vos "téléchargements" la liste des URL des dalles
+                          intersectées par la figure saisie ou importée.
+                          Glisser-déposer le fichier sur votre navigateur : un
+                          onglet s'ouvre avec la liste des URL. Cliquer-droit et
+                          choisir "downthemall". L'interface de gestion des
+                          téléchargements s'ouvre. Lancer le téléchargement
+                          massif."
+                        </li>
+                      </ul>
+                    </ul>
+                  </div>
+                </Modal>
               </Space>
             </div>
           ) : null}
