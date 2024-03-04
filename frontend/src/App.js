@@ -20,6 +20,8 @@ import {
   UploadOutlined,
   DownloadOutlined,
   DeleteOutlined,
+  QuestionCircleOutlined
+
 } from "@ant-design/icons";
 import { get as getProjection } from "ol/proj";
 import { register } from "ol/proj/proj4";
@@ -1060,16 +1062,12 @@ class App extends Component {
             <li>téléchargement directement via l'interface : cliquer sur le polygone en question (ou bien sur le bouton "liste des nuages de points classés") pour afficher les dalles. Cliquer-droit sur une dalle au hasard, choisir "downthemall" et lancer le téléchargement à partir de l'interface qui vient de s'ouvrir.</li>
             <li>téléchargement via le fichier texte : retrouver dans vos "téléchargements" la liste des URL des dalles intersectées par la figure saisie ou importée. Glisser-déposer le fichier sur votre navigateur : un onglet s'ouvre avec la liste des URL. Cliquer-droit et choisir "downthemall". L'interface de gestion des téléchargements s'ouvre. Lancer le téléchargement massif."</li>
           </ul>
-
-    téléchargement directement via l'interface : cliquer sur le polygone en question (ou bien sur le bouton "liste des nuages de points classés") pour afficher les dalles. Cliquer-droit sur une dalle au hasard, choisir "downthemall" et lancer le téléchargement à partir de l'interface qui vient de s'ouvrir.
-    téléchargement via le fichier texte : retrouver dans vos "téléchargements" la liste des URL des dalles intersectées par la figure saisie ou importée. Glisser-déposer le fichier sur votre navigateur : un onglet s'ouvre avec la liste des URL. Cliquer-droit et choisir "downthemall". L'interface de gestion des téléchargements s'ouvre. Lancer le téléchargement massif."
-</ul>
+          </ul>
       </div>
     )
 
     return (
       <div>
-        <Title level={5} style={{marginLeft: "auto", marginRight: "auto",justifyContent: "center"}}>Site en cours de qualification.</Title>
         <div className="map-container">
           <div id="map"></div>
           <div id="popup" className="ol-popup">
@@ -1136,6 +1134,7 @@ class App extends Component {
 
           {this.state.dalles_select.length > 0 ? (
             <div className="center">
+            <Space>
               <Button
                 onClick={this.handleTelechargement}
                 type="default"
@@ -1144,7 +1143,8 @@ class App extends Component {
               >
                 Télécharger la liste des liens
               </Button>
-              <Popover content={infoDownload}title="Information"><QuestionCircleOutlined /></Popover>
+              <Popover content={infoDownload}title="Information"><QuestionCircleOutlined/></Popover>
+              </Space>
             </div>
           ) : null}
           {this.state.coor_mouse !== null ? (
