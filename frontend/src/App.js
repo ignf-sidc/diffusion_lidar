@@ -1134,9 +1134,11 @@ class App extends Component {
                 >
                   Télécharger la liste des liens
                 </Button>
-                <Button type="primary" onClick={this.showModal}>
-                  information
-                </Button>
+                <Button
+                  type="primary"
+                  onClick={this.showModal}
+                  icon={<QuestionCircleOutlined />}
+                ></Button>
                 <Modal
                   title="Info téléchargement"
                   open={this.state.isModalOpen}
