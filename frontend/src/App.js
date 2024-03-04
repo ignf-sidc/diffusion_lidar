@@ -129,9 +129,6 @@ class App extends Component {
     this.setState({ isModalOpen: false });
   };
 
-  handleCancel = () => {
-    this.setState({ isModalOpen: false });
-  };
 
   style_dalle_select(feature) {
     // fonction permettant d'ajuster le style au survol d'une dalle
@@ -1143,7 +1140,6 @@ class App extends Component {
                   title="Info téléchargement"
                   open={this.state.isModalOpen}
                   onOk={this.handleOk}
-                  onCancel={this.handleCancel}
                 >
                   <div>
                     <ul>
