@@ -81,17 +81,21 @@ docker-compose up
     - `package-.json` : contient les dépendances pour la partie frontend qu'il faut installer avec npm install
 
 - `.env` : contenu (avoir les accés S3 pour y acceder. Pour les env PG, hormis le port on peut changer la valeur, il les faudra pour se connecter si besoin )
-    ```ACCESS_KEY=
-    SECRET_KEY=
-    ENDPOINT=
-    REGION=
-    BUCKET=
 
-    PGDATABASE=gis
-    PGHOST=db
-    PGUSER=docker
-    PGPASSWORD=docker
-    PGPORT=5432```
+
+```bash
+ACCESS_KEY=
+SECRET_KEY=
+ENDPOINT=
+REGION=
+BUCKET=
+
+PGDATABASE=gis
+PGHOST=db
+PGUSER=docker
+PGPASSWORD=docker
+PGPORT=5432
+```
 
 - `.dockerignore` : permet de ne pas copier tous les fichiers dans l'image comme le docker-compose.yml lui même qui n'a pas d'interet dans l'image
 - `.gitignore` : permet d'ignorer les fichiers qu'on ne veut pas push sur git
