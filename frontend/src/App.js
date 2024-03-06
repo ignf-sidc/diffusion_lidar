@@ -1180,12 +1180,13 @@ class App extends Component {
           ) : null}
           {this.state.coor_mouse !== null ? (
             <div>
+              
               <Card>
                 <p
                   style={{ margin: "0", fontSize: "16px", fontWeight: "bold" }}
                   className="menu_mode center"
                 >
-                  Coordonnées : {Math.round(this.state.coor_mouse[0])} -{" "}
+                  Coordonnées (lambert 93) : {Math.round(this.state.coor_mouse[0])} -{" "}
                   {Math.round(this.state.coor_mouse[1])}
                 </p>
               </Card>
