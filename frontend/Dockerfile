@@ -1,19 +1,8 @@
 FROM node:latest
 
-WORKDIR /usr/app
-
-COPY package.json .
-
-RUN npm install
-
-COPY . .
-
-RUN npm run build
-
-EXPOSE 3000
-
-
+WORKDIR /usr/app/frontend
 
 ENV NODE_ENV=production
-
-CMD ["sh", "-c", "npm start"]
+EXPOSE 3000
+CMD ["sh", "-c", "npm install && npm run build"]
+# CMD ["sh", "-c", "while :; do node app.js; done"]
