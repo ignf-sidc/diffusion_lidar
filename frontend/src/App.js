@@ -1140,17 +1140,22 @@ class App extends Component {
                   open={this.state.isModalOpen}
                   onOk={this.handleOk}
                   width={650}
-                  cancelButtonProps={{ style: { display: 'none' } }}
+                  cancelButtonProps={{ style: { display: "none" } }}
                 >
                   <div>
+                    Comment télécharger les données ?
                     <ul>
                       <li>
-                        Ce bouton vous permet de récupérer l'ensemble des liens
-                        de téléchargement des données qui vous intéresse.
+                        Cette interface vous permet de récupérer la liste des
+                        données vous intéressent.
                       </li>
                       <li>
-                        Vous pouvez utiliser les applicatifs suivant pour
-                        télécharger massivement les données:
+                        Pour récupérer les données facilement, il faudra
+                        automatiser le téléchargement.
+                      </li>
+                      <li>
+                        Pour cela, vous pouvez utiliser les applicatifs suivants
+                        (par exemple) :
                       </li>
                       <ul>
                         <li>
@@ -1164,20 +1169,18 @@ class App extends Component {
                           </a>
                         </li>
                       </ul>
-                      <li>
-                        Pour plus d'explication n'hésitez pas à regerde cette
-                        courte vidéo:
-                        <iframe
-                          width="560"
-                          height="315"
-                          src="https://www.youtube.com/embed/-YomQJC6S38?si=IC1-YnAXemv6USsU"
-                          title="YouTube video player"
-                          frameborder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowfullscreen
-                        ></iframe>
-                      </li>
                     </ul>
+                    Pour plus d'explication n'hésitez pas à regerde cette courte
+                    vidéo:
+                    <iframe
+                      width="560"
+                      height="315"
+                      src="https://www.youtube.com/embed/-YomQJC6S38?si=ycCCdLbQ4KmMNSqn&amp;start=59"
+                      title="YouTube video player"
+                      frameborder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowfullscreen
+                    ></iframe>
                   </div>
                 </Modal>
               </Space>
