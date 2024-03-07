@@ -1196,7 +1196,7 @@ class App extends Component {
             >
               <Card>
                 <p
-                  style={{ margin: "0", fontSize: "16px", fontWeight: "bold" }}
+                  style={{ margin: "0", fontSize: "16px", fontWeight: "bold", width: "auto" }}
                   className="menu_mode center"
                 >
                   <p>Coordonnées (lambert 93) :</p>
