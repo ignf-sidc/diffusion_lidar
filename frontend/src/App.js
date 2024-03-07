@@ -14,27 +14,38 @@ import "../node_modules/ol/ol.css";
 import { FaTimes, FaMapMarker } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import { BsChevronDown, BsChevronLeft } from "react-icons/bs";
-import { withCookies } from "react-cookie";
-import { Card, Radio, Space, Button, Upload, message, Collapse, Popover } from "antd";
+import {
+  Card,
+  Radio,
+  Space,
+  Button,
+  Upload,
+  message,
+  Collapse,
+  Popover,
+  Modal,
+} from "antd";
 import {
   UploadOutlined,
   DownloadOutlined,
   DeleteOutlined,
-  QuestionCircleOutlined
-
+  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import { get as getProjection } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import proj4 from "proj4";
 
-import { Typography } from 'antd';
+import { Typography } from "antd";
 
 const { Title } = Typography;
+
 class App extends Component {
   constructor(props) {
     super(props);
-    const { cookies } = props;
+    // on défini un state pour savoir quand ouvrir la modal d'information TODO: Reprendre les définitions de state
+
     this.state = {
+      isModalOpen: false,
       coordinate: null,
       showInfobulle: false,
       selectedFeatures: [],
@@ -45,16 +56,12 @@ class App extends Component {
       selectedMode: "click",
       zoom: 5,
       coor_mouse: null,
-      expiresDateCookie: null,
-      cookie_zoom_start: cookies.get("zoom") || 6,
-      cookie_coor_start: cookies.get("coor") || [
-        288074.8449901076, 6247982.515792289,
-      ],
+      zoom_start: 6,
+      coor_start: [288074.8449901076, 6247982.515792289],
       api_url: null,
       fileUpload: [],
     };
     this.name_file_txt = "liste_dalle.txt";
-    this.day_cookie_expiration = 7;
     this.dalles_select = [];
     this.polygon_drawn = [];
     this.limit_dalle_select = 2500;
@@ -113,6 +120,14 @@ class App extends Component {
       },
     };
   }
+
+  showModal = () => {
+    this.setState({ isModalOpen: true });
+  };
+
+  handleOk = () => {
+    this.setState({ isModalOpen: false });
+  };
 
   style_dalle_select(feature) {
     // fonction permettant d'ajuster le style au survol d'une dalle
@@ -576,11 +591,6 @@ class App extends Component {
     );
     register(proj4);
 
-    const expiresDate = new Date();
-    expiresDate.setDate(expiresDate.getDate() + this.day_cookie_expiration);
-    // expiration des cookies
-    this.setState({ expiresDateCookie: expiresDate });
-
     var createMap = () => {
       var map = new Map({
         target: "map",
@@ -599,8 +609,8 @@ class App extends Component {
         ],
         view: new View({
           projection: getProjection("EPSG:2154"),
-          center: this.state.cookie_coor_start,
-          zoom: this.state.cookie_zoom_start,
+          center: this.state.coor_start,
+          zoom: this.state.zoom_start,
           maxZoom: 16,
         }),
       });
@@ -810,16 +820,6 @@ class App extends Component {
       map.on("moveend", () => {
         var view = map.getView();
         this.setState({ zoom: view.getZoom() });
-        // creation du cookie
-        const { cookies } = this.props;
-        // on set le cookie à chaque fois qu'on zoom
-        cookies.set("zoom", this.state.zoom, {
-          expires: this.state.expiresDateCookie,
-        });
-        // on set le cookie avec les coordonnées à chaque fois qu'on bouge sur la carte
-        cookies.set("coor", view.getCenter(), {
-          expires: this.state.expiresDateCookie,
-        });
         // recupere la bbox de la fenetre de son pc
         var extent = view.calculateExtent(map.getSize());
 
@@ -1053,19 +1053,6 @@ class App extends Component {
       // },
     ];
 
-    const infoDownload =(
-      <div>
-        <ul>
-          <li>Vous n'avez pas encore installé de plugin web de téléchargement massif comme downthemall : installez-le, c'est rapide et libre !</li>
-          <li>Vous avez installé un plugin web de téléchargement massif :</li>
-          <ul>
-            <li>téléchargement directement via l'interface : cliquer sur le polygone en question (ou bien sur le bouton "liste des nuages de points classés") pour afficher les dalles. Cliquer-droit sur une dalle au hasard, choisir "downthemall" et lancer le téléchargement à partir de l'interface qui vient de s'ouvrir.</li>
-            <li>téléchargement via le fichier texte : retrouver dans vos "téléchargements" la liste des URL des dalles intersectées par la figure saisie ou importée. Glisser-déposer le fichier sur votre navigateur : un onglet s'ouvre avec la liste des URL. Cliquer-droit et choisir "downthemall". L'interface de gestion des téléchargements s'ouvre. Lancer le téléchargement massif."</li>
-          </ul>
-          </ul>
-      </div>
-    )
-
     return (
       <div>
         <div className="map-container">
@@ -1134,16 +1121,65 @@ class App extends Component {
 
           {this.state.dalles_select.length > 0 ? (
             <div className="center">
-            <Space>
-              <Button
-                onClick={this.handleTelechargement}
-                type="default"
-                icon={<DownloadOutlined />}
-                size="large"
-              >
-                Télécharger la liste des liens
-              </Button>
-              <Popover content={infoDownload}title="Information"><QuestionCircleOutlined/></Popover>
+              <Space>
+                <Button
+                  onClick={this.handleTelechargement}
+                  type="default"
+                  icon={<DownloadOutlined />}
+                  size="large"
+                >
+                  Télécharger la liste des liens
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={this.showModal}
+                  icon={<QuestionCircleOutlined />}
+                ></Button>
+                <Modal
+                  title="Info téléchargement"
+                  open={this.state.isModalOpen}
+                  onOk={this.handleOk}
+                  width={650}
+                  cancelButtonProps={{ style: { display: 'none' } }}
+                >
+                  <div>
+                    <ul>
+                      <li>
+                        Ce bouton vous permet de récupérer l'ensemble des liens
+                        de téléchargement des données qui vous intéresse.
+                      </li>
+                      <li>
+                        Vous pouvez utiliser les applicatifs suivant pour
+                        télécharger massivement les données:
+                      </li>
+                      <ul>
+                        <li>
+                          <a href="https://xtremedownloadmanager.com/">
+                            Xtreme Download Manager
+                          </a>
+                        </li>
+                        <li>
+                          <a href="https://www.downthemall.net/">
+                            DownThemAll!
+                          </a>
+                        </li>
+                      </ul>
+                      <li>
+                        Pour plus d'explication n'hésitez pas à regerde cette
+                        courte vidéo:
+                        <iframe
+                          width="560"
+                          height="315"
+                          src="https://www.youtube.com/embed/-YomQJC6S38?si=IC1-YnAXemv6USsU"
+                          title="YouTube video player"
+                          frameborder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowfullscreen
+                        ></iframe>
+                      </li>
+                    </ul>
+                  </div>
+                </Modal>
               </Space>
             </div>
           ) : null}
@@ -1154,7 +1190,8 @@ class App extends Component {
                   style={{ margin: "0", fontSize: "16px", fontWeight: "bold" }}
                   className="menu_mode center"
                 >
-                  Coordonnées : {Math.round(this.state.coor_mouse[0])} -{" "}
+                  Coordonnées (lambert 93) :{" "}
+                  {Math.round(this.state.coor_mouse[0])} -{" "}
                   {Math.round(this.state.coor_mouse[1])}
                 </p>
               </Card>
@@ -1166,4 +1203,4 @@ class App extends Component {
   }
 }
 
-export default withCookies(App);
+export default App;
