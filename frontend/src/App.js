@@ -129,7 +129,6 @@ class App extends Component {
     this.setState({ isModalOpen: false });
   };
 
-
   style_dalle_select(feature) {
     // fonction permettant d'ajuster le style au survol d'une dalle
     // on parcout la liste des dalles selectionner
@@ -1144,34 +1143,38 @@ class App extends Component {
                   <div>
                     <ul>
                       <li>
-                        Vous n'avez pas encore installé de plugin web de
-                        téléchargement massif comme downthemall : installez-le,
-                        c'est rapide et libre !
+                        Ce bouton vous permet de récupérer l'ensemble des liens
+                        de téléchargement des données qui vous intéresse.
                       </li>
                       <li>
-                        Vous avez installé un plugin web de téléchargement
-                        massif :
+                        Vous pouvez utiliser les applicatifs suivant pour
+                        télécharger massivement les données:
                       </li>
                       <ul>
                         <li>
-                          téléchargement directement via l'interface : cliquer
-                          sur le polygone en question (ou bien sur le bouton
-                          "liste des nuages de points classés") pour afficher
-                          les dalles. Cliquer-droit sur une dalle au hasard,
-                          choisir "downthemall" et lancer le téléchargement à
-                          partir de l'interface qui vient de s'ouvrir.
+                          <a href="https://xtremedownloadmanager.com/">
+                            Xtreme Download Manager
+                          </a>
                         </li>
                         <li>
-                          téléchargement via le fichier texte : retrouver dans
-                          vos "téléchargements" la liste des URL des dalles
-                          intersectées par la figure saisie ou importée.
-                          Glisser-déposer le fichier sur votre navigateur : un
-                          onglet s'ouvre avec la liste des URL. Cliquer-droit et
-                          choisir "downthemall". L'interface de gestion des
-                          téléchargements s'ouvre. Lancer le téléchargement
-                          massif."
+                          <a href="https://www.downthemall.net/">
+                            DownThemAll!
+                          </a>
                         </li>
                       </ul>
+                      <li>
+                        Pour plus d'explication n'hésitez pas à regerde cette
+                        courte vidéo:
+                        <iframe
+                          width="560"
+                          height="315"
+                          src="https://www.youtube.com/embed/-YomQJC6S38?si=IC1-YnAXemv6USsU"
+                          title="YouTube video player"
+                          frameborder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowfullscreen
+                        ></iframe>
+                      </li>
                     </ul>
                   </div>
                 </Modal>
@@ -1180,13 +1183,13 @@ class App extends Component {
           ) : null}
           {this.state.coor_mouse !== null ? (
             <div>
-              
               <Card>
                 <p
                   style={{ margin: "0", fontSize: "16px", fontWeight: "bold" }}
                   className="menu_mode center"
                 >
-                  Coordonnées (lambert 93) : {Math.round(this.state.coor_mouse[0])} -{" "}
+                  Coordonnées (lambert 93) :{" "}
+                  {Math.round(this.state.coor_mouse[0])} -{" "}
                   {Math.round(this.state.coor_mouse[1])}
                 </p>
               </Card>
