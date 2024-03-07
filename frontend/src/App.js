@@ -1169,7 +1169,7 @@ class App extends Component {
                         </li>
                       </ul>
                     </ul>
-                    Pour plus d'explications la vidéo suivante pour indique la marche à suivre
+                    Pour plus d'explications la vidéo suivante vous indique la marche à suivre
                     <iframe
                       width="560"
                       height="315"
