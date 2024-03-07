@@ -1169,8 +1169,8 @@ class App extends Component {
                         </li>
                       </ul>
                     </ul>
-                    Pour plus d'explications la vidéo suivante vous indique la marche à suivre :
-                    
+                    Pour plus d'explications la vidéo suivante vous indique la
+                    marche à suivre :
                     <iframe
                       width="560"
                       height="315"
@@ -1199,7 +1199,8 @@ class App extends Component {
                   style={{ margin: "0", fontSize: "16px", fontWeight: "bold" }}
                   className="menu_mode center"
                 >
-                  Coordonnées (lambert 93) :{" "}
+                  <p>Coordonnées (lambert 93) :</p>
+                  <p>{" "}</p>
                   {Math.round(this.state.coor_mouse[0])} -{" "}
                   {Math.round(this.state.coor_mouse[1])}
                 </p>
