@@ -1,8 +1,24 @@
-FROM node:latest
+FROM node:20-alpine as builder
 
-WORKDIR /usr/app/frontend
+# ???
+# ENV NODE_ENV=production
 
-ENV NODE_ENV=production
-EXPOSE 3000
-CMD ["sh", "-c", "npm install && npm run build"]
-# CMD ["sh", "-c", "while :; do node app.js; done"]
+RUN mkdir -p /opt/frontend
+WORKDIR /opt/frontend
+
+# installation des dépendances
+COPY package.json .
+COPY package-lock.json .
+RUN npm install
+
+# copie du reste du code
+COPY . .
+
+# construction react
+RUN npm run build
+
+FROM nginxinc/nginx-unprivileged:stable-alpine as production
+
+COPY --from=builder /opt/frontend/build/ /usr/share/nginx/html/.
+WORKDIR /usr/share/nginx/html
+# NB : uid=101, gid=101 et port=8080
