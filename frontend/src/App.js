@@ -1139,6 +1139,7 @@ class App extends Component {
                   title="Info téléchargement"
                   open={this.state.isModalOpen}
                   onOk={this.handleOk}
+                  width="auto"
                 >
                   <div>
                     <ul>
