@@ -1140,6 +1140,7 @@ class App extends Component {
                   open={this.state.isModalOpen}
                   onOk={this.handleOk}
                   width={650}
+                  cancelButtonProps={{hidden: true}}
                 >
                   <div>
                     <ul>
