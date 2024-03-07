@@ -1136,14 +1136,13 @@ class App extends Component {
                   icon={<QuestionCircleOutlined />}
                 ></Button>
                 <Modal
-                  title="Info téléchargement"
+                  title="Comment télécharger les données ?"
                   open={this.state.isModalOpen}
                   onOk={this.handleOk}
                   width={650}
                   cancelButtonProps={{ style: { display: "none" } }}
                 >
                   <div>
-                    Comment télécharger les données ?
                     <ul>
                       <li>
                         Cette interface vous permet de récupérer la liste des
@@ -1159,19 +1158,18 @@ class App extends Component {
                       </li>
                       <ul>
                         <li>
-                          <a href="https://xtremedownloadmanager.com/">
-                            Xtreme Download Manager
-                          </a>
-                        </li>
-                        <li>
                           <a href="https://www.downthemall.net/">
                             DownThemAll!
                           </a>
                         </li>
+                        <li>
+                          <a href="https://xtremedownloadmanager.com/">
+                            Xtreme Download Manager
+                          </a>
+                        </li>
                       </ul>
                     </ul>
-                    Pour plus d'explication n'hésitez pas à regerde cette courte
-                    vidéo:
+                    Pour plus d'explications la vidéo suivante pour indique la marche à suivre
                     <iframe
                       width="560"
                       height="315"
