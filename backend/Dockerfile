@@ -8,4 +8,5 @@ COPY . .
 RUN pip3 install  --upgrade  -r requirements.txt
 
 
+
 ENTRYPOINT ["/bin/bash", "./docker-entrypoint.sh"]
