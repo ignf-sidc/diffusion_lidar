@@ -3,41 +3,42 @@ import type { RadioChangeEvent } from "antd";
 import PropTypes from "prop-types";
 import { MenuMode } from "./MenuMode.js";
 import { MapContext } from "../../App.js";
-import { Card, Space, Radio, Collapse } from "antd";
+import { Card, Space, Radio, Collapse, Button, Modal } from "antd";
 import {
   handle_mode_change,
   handle_telechargement,
 } from "../../hook/useHandle.js";
-import { remove_all_polygons_menu } from "../../hook/useRemove.js";
-import { list_polygons } from "./ListPolygon.js";
+import { remove_all_dalle_menu, remove_all_polygons_menu } from "../../hook/useRemove.js";
+import { listPolygons, list_polygons } from "./ListPolygon.js";
 import {
   DownloadOutlined,
   DeleteOutlined,
   QuestionCircleOutlined,
 } from "@ant-design/icons";
+import { listDalles } from "./ListDalles.js";
 
 export const Menu = (props) => {
   const { MapState, setMapState, zoom } = useContext(MapContext);
   const [selectedMode, setSelectedMode] = useState("click");
-  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const onChange = (e: RadioChangeEvent) => {
     setSelectedMode(e.target.value);
   };
 
   const showModal = () => {
-    this.setState({ isModalOpen: true });
+    setIsModalOpen(true);
   };
 
   const handleOk = () => {
-    this.setState({ isModalOpen: false });
+    setIsModalOpen(false);
   };
 
   const items_collapse_liste_polygons = [
     {
       key: "1",
       label: "Liste des emprises",
-      children: list_polygons,
+      children: listPolygons,
       extra: (
         <DeleteOutlined
           style={{ color: "red" }}
@@ -46,6 +47,36 @@ export const Menu = (props) => {
       ),
     },
   ];
+
+  const items_collapse_liste_produit = [
+    {
+      key: "1",
+      label: "Liste des nuages de points classés",
+      children: listDalles,
+      extra: (
+        <DeleteOutlined
+          style={{ color: "red" }}
+          onClick={remove_all_dalle_menu}
+        />
+      ),
+    },
+    // {
+    //     key: '2',
+    //     label: 'Liste des MNS',
+    //     children: <p>Donnée non disponible.</p>,
+    // },
+    // {
+    //     key: '3',
+    //     label: 'Liste des MNT',
+    //     children: <p>Donnée non disponible.</p>,
+    // },
+    // {
+    //     key: '4',
+    //     label: 'Autres',
+    //     children: <p>Donnée non disponible.</p>,
+    // },
+  ];
+
   return (
     <div className="menu">
       {zoom >= props.zoom_display_dalle ? (
@@ -108,14 +139,14 @@ export const Menu = (props) => {
             </Button>
             <Button
               type="primary"
-              onClick={this.showModal}
+              onClick={showModal}
               icon={<QuestionCircleOutlined />}
             ></Button>
             <Modal
               title="Info téléchargement"
-              open={this.isModalOpen}
-              onOk={this.handleOk}
-              onCancel={this.handleOk}
+              open={isModalOpen}
+              onOk={handleOk}
+              onCancel={handleOk}
               width={650}
               cancelButtonProps={{ style: { display: "none" } }}
             >
@@ -152,9 +183,9 @@ export const Menu = (props) => {
                   height="315"
                   src="https://www.youtube.com/embed/-YomQJC6S38?si=ycCCdLbQ4KmMNSqn&amp;start=59"
                   title="YouTube video player"
-                  frameborder="0"
+                  frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowfullscreen
+                  allowFullScreen
                 ></iframe>
               </div>
             </Modal>
