@@ -1,18 +1,23 @@
-FROM node:latest
+FROM node:20-alpine as builder
 
-WORKDIR /usr/app
+# ???
+# ENV NODE_ENV=production
 
+RUN mkdir -p /opt/frontend
+WORKDIR /opt/frontend
+
+# installation des dépendances
 COPY package.json .
 
 
+# copie du reste du code
 COPY . .
 
+# construction react
 RUN npm run build
 
-EXPOSE 3000
+FROM nginxinc/nginx-unprivileged:stable-alpine as production
 
-
-
-ENV NODE_ENV=production
-
-CMD ["sh", "-c", "npm start"]
+COPY --from=builder /opt/frontend/build/ /usr/share/nginx/html/.
+WORKDIR /usr/share/nginx/html
+# NB : uid=101, gid=101 et port=8080

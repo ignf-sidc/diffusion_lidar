@@ -1,10 +1,11 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
+FROM python:3.9
 
 RUN mkdir -p /backend
 WORKDIR /backend
 
 COPY . .
 
-RUN pip3 install -r requirements.txt
+RUN pip3 install  --upgrade  -r requirements.txt
+
 
 ENTRYPOINT ["/bin/bash", "./docker-entrypoint.sh"]

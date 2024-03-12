@@ -14,7 +14,6 @@ def test_extract_polygon_coordinates_valid():
     """test si la fonction extract_polygon_coordinates renvoie la bonne emprise par rapport au geojson fournit"""
     geojson_data = '{"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[[0, 0], [1, 1], [1, 0], [0, 0]]]}}]}'
     result = ExtractDataFile.extract_polygon_coordinates(geojson_data)
-    print(result)
     assert (
         result
         == '{"type": "Polygon", "coordinates": [[[0.0, 0.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]]]}'
