@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import PropTypes from "prop-types";
-import { Card, Radio, Upload, Space } from "antd";
+import { Card, Radio, Upload, Space, Collapse } from "antd";
 import {
   handle_mode_change,
   handle_upload,

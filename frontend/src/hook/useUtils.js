@@ -181,7 +181,7 @@ function dalle_select_max_alert(
   return true;
 }
 function generate_multipolygon_bloc(drawnBlocsLayer, vectorSourceBloc) {
-  axios.get(`http://localhost:8000/data/get/blocs`).then((response) => {
+  axios.get(`http://localhost:8000/api/data/get/blocs`).then((response) => {
     drawnBlocsLayer.getSource().clear();
     response.data.result.features.forEach((bloc) => {
       const multiPolygonFeature = new Feature({

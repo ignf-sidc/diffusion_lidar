@@ -250,7 +250,13 @@ export const App = (props) => {
       }
     });
     setMapState({ ...MapState, dalles_select: dalles_select });
-    const status = dalle_select_max_alert(type, feature);
+    const status = dalle_select_max_alert(emprise,
+      enitite_select,
+      drawnPolygonsLayer,
+      vectorSourceDrawPolygon,
+      MapState,
+      vectorSourceGridDalle,
+      limit_dalle_select);
     return status;
   };
 
@@ -313,7 +319,7 @@ export const App = (props) => {
   };
 
   const generate_multipolygon_bloc = (drawnBlocsLayer) => {
-    axios.get(`http://localhost:8000/data/get/blocs`).then((response) => {
+    axios.get(`http://localhost:8000/api/data/get/blocs`).then((response) => {
       drawnBlocsLayer.getSource().clear();
       response.data.result.features.forEach((bloc) => {
         const multiPolygonFeature = new Feature({
@@ -551,7 +557,6 @@ export const App = (props) => {
       const appProtocol = window.location.protocol;
       const appHostname = window.location.hostname;
       setApi_url(`${appProtocol}//${appHostname}`);
-      console.log(api_url);
 
       const onSuccess = (config) => {
         // Traitement réussi ici
@@ -593,9 +598,8 @@ export const App = (props) => {
     drawnBlocsLayer,
     overlay
   ) => {
-    console.log("hello");
 
-    let layers = mapInstance.getLayers()
+    let layers = mapInstance.getLayers();
     layers.extend([
       new olExtended.layer.GeoportalWMTS({
         layer: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
@@ -604,9 +608,7 @@ export const App = (props) => {
       drawnPolygonsLayer, // ajout de la couche qui affichera le polygon pour séléectionner des dalles
       filePolygonsLayer, // ajout de la couche qui affichera le polygon d'un fichier geojson ou shp
       drawnBlocsLayer, // ajout de la couche qui affichera les blocs
-    ])
-    console.log('estend');
-
+    ]);
 
     const search = new olExtended.control.SearchEngine({ zoomTo: 12 });
     mapInstance.addControl(search);
@@ -632,20 +634,21 @@ export const App = (props) => {
       if (event.selected.length > 0) {
         const selectedFeature = event.selected[0];
         // quand on survole une dalle cliquer on met le style d'une dalle cliquer
-        style_dalle_select(selectedFeature);
+        style_dalle_select(selectedFeature,MapState);
       }
       // quand on quitte la dalle survolé
       if (event.deselected.length > 0) {
-        if (old_dalles_select !== null) {
-          const selected = style_dalle_select(old_dalles_select);
+        if (MapState.old_dalles_select !== null) {
+          const selected = style_dalle_select(MapState.old_dalles_select, MapState);
           if (!selected) {
             // si on survol une dalle non cliqué alors on remet le style null
-            old_dalles_select.setStyle(null);
+            MapState.old_dalles_select.setStyle(null);
           }
         }
+        
       }
       // on stocke la derniere dalle survoler pour modifier le style
-      old_dalles_select = selectedFeature;
+      MapState.old_dalles_select = event.selected[0];
     });
 
     const selectInteractionClick = new Select({
@@ -700,7 +703,7 @@ export const App = (props) => {
           featureDeselect.setStyle(null);
         }
       }
-      setMapState({ ...MapState, dalles_select: dalles_select });
+      setMapState({ ...MapState, dalles_select: event.selected[0] });
     });
 
     // Créer une interaction de tracé de polygon
@@ -756,7 +759,6 @@ export const App = (props) => {
         overlay.setPosition([centerX, centerY]);
         overlay.getElement().style.display = "block";
 
-        console.log(overlay.getElement().innerHTML);
       }
     });
 
@@ -809,7 +811,7 @@ export const App = (props) => {
 
         axios
           .get(
-            `${api_url}:8000/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
+            `http://localhost:8000/api/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
           )
           .then((response) => {
             response.data.result.forEach((dalle) => {
@@ -826,7 +828,7 @@ export const App = (props) => {
                 },
               });
               // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
-              dalles_select.forEach((dalle_select) => {
+              MapState.dalles_select.forEach((dalle_select) => {
                 if (
                   dalle_select["values_"]["properties"]["id"] === name_dalle[0]
                 ) {
@@ -862,14 +864,10 @@ export const App = (props) => {
           <div id="popup-content"></div>
         </div>
       </div>
-      {MapState.coordinate_mouse ? (
-        <div></div>
-      ) : (
         <Menu
           zoom_display_dalle={zoom_display_dalle}
           limit_dalle_select={limit_dalle_select}
         />
-      )}
     </MapContext.Provider>
   );
 };
