@@ -1,4 +1,4 @@
-export const list_polygons = (props) => {
+export const listPolygons = (props) => {
     
     return(
     <div>
