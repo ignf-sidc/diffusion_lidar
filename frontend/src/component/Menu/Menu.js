@@ -48,7 +48,6 @@ export const Menu = (props) => {
   ];
   return (
     <div className="menu">
-      {" "}
       {zoom >= props.zoom_display_dalle ? (
         <div className="menu_mode">
           <Card title="Choix du mode de sélection">
@@ -164,7 +163,7 @@ export const Menu = (props) => {
       ) : null}
       {MapState.coordinate_mouse !== null ? (
         <Card>
-          <p
+          <div
             style={{ margin: "0", fontSize: "16px", fontWeight: "bold" }}
             className="menu_mode center"
           >
@@ -173,7 +172,7 @@ export const Menu = (props) => {
               {Math.round(MapState.coordinate_mouse[0])} -{" "}
               {Math.round(MapState.coordinate_mouse[1])}
             </p>
-          </p>
+          </div>
         </Card>
       ) : null}
     </div>
