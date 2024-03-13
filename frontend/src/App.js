@@ -24,7 +24,7 @@ import {
   Collapse,
   Popover,
   Modal,
-} from "antd";
+  } from "antd";
 import {
   UploadOutlined,
   DownloadOutlined,
@@ -126,6 +126,9 @@ class App extends Component {
   };
 
   handleOk = () => {
+    this.setState({ isModalOpen: false });
+  };
+  handleCancel = () => {
     this.setState({ isModalOpen: false });
   };
 
@@ -1136,14 +1139,14 @@ class App extends Component {
                   icon={<QuestionCircleOutlined />}
                 ></Button>
                 <Modal
-                  title="Info téléchargement"
+                  title="Comment télécharger les données ?"
                   open={this.state.isModalOpen}
                   onOk={this.handleOk}
+                  onCancel={this.handleCancel}
                   width={650}
                   cancelButtonProps={{ style: { display: "none" } }}
                 >
                   <div>
-                    Comment télécharger les données ?
                     <ul>
                       <li>
                         Cette interface vous permet de récupérer la liste des
@@ -1159,19 +1162,19 @@ class App extends Component {
                       </li>
                       <ul>
                         <li>
-                          <a href="https://xtremedownloadmanager.com/">
-                            Xtreme Download Manager
-                          </a>
-                        </li>
-                        <li>
                           <a href="https://www.downthemall.net/">
                             DownThemAll!
                           </a>
                         </li>
+                        <li>
+                          <a href="https://xtremedownloadmanager.com/">
+                            Xtreme Download Manager
+                          </a>
+                        </li>
                       </ul>
                     </ul>
-                    Pour plus d'explication n'hésitez pas à regerde cette courte
-                    vidéo:
+                    Pour plus d'explications la vidéo suivante vous indique la
+                    marche à suivre :
                     <iframe
                       width="560"
                       height="315"
@@ -1187,18 +1190,30 @@ class App extends Component {
             </div>
           ) : null}
           {this.state.coor_mouse !== null ? (
-            <div>
-              <Card>
-                <p
-                  style={{ margin: "0", fontSize: "16px", fontWeight: "bold" }}
-                  className="menu_mode center"
-                >
-                  Coordonnées (lambert 93) :{" "}
-                  {Math.round(this.state.coor_mouse[0])} -{" "}
-                  {Math.round(this.state.coor_mouse[1])}
-                </p>
-              </Card>
-            </div>
+            <Card
+              style={{
+                position: "absolute",
+                bottom: 0,
+                width: "20%",
+                borderRadius: 0,
+                borderBottom: 0,
+                borderLeft: 0,
+                borderRight: 0,
+              }}
+            >
+              <p
+                className="center"
+                style={{
+                  margin: 0,
+                  fontSize: 16,
+                  fontWeight: "bold",
+                }}
+              >
+                Coordonnées (lambert 93) :<br></br>
+                {Math.round(this.state.coor_mouse[0])} -{" "}
+                {Math.round(this.state.coor_mouse[1])}
+              </p>
+            </Card>
           ) : null}
         </div>
       </div>
