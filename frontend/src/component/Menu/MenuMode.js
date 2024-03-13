@@ -10,23 +10,25 @@ import {
 import { MapContext } from "../../App.js";
 
 export const MenuMode = (props) => {
-  const {state, setState} = useContext(MapContext);
+  const { state, setState } = useContext(MapContext);
+
+  const onChange = () => {setState({
+    selectedMode: handle_mode_change(
+      { target: { value: mode.target.value } },
+      state.mapInstance,
+      state.selectedMode,
+      props.selectInteractionClick,
+      props.drawPolygon,
+      props.drawRectangle
+    ),
+  })};
 
   return (
     <div className="menu_mode">
       <Card title="Choix du mode de séléction">
         <Space direction="vertical" style={{ width: "100%" }} size="large">
           <Radio.Group
-            onChange={setState({
-              selectedMode: handle_mode_change(
-                { target: { value: "click" } },
-                state.mapInstance,
-                state.selectedMode,
-                props.selectInteractionClick,
-                props.drawPolygon,
-                props.drawRectangle
-              ),
-            })}
+            onChange={onChange}
             value={state.selectedMode}
           >
             <Radio value={"click"}>Click</Radio>

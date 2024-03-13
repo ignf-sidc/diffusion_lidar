@@ -18,13 +18,26 @@ import {
 import { listDalles } from "./ListDalles.js";
 
 export const Menu = (props) => {
-  const { MapState, setMapState, zoom } = useContext(MapContext);
-  const [selectedMode, setSelectedMode] = useState("click");
+  const { MapState, setMapState, zoom, selectedMode, setSelectedMode, mapInstance } = useContext(MapContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const onChange = (e: RadioChangeEvent) => {
     setSelectedMode(e.target.value);
+    console.log(mapInstance);
+    if (e.target.value == "polygon") {
+    mapInstance.removeInteraction(this.selectInteractionClick);
+    mapInstance.addInteraction(this.drawPolygon);
+    mapInstance.removeInteraction(this.drawRectangle);
+  } else if (e.target.value == "rectangle") {
+    mapInstance.removeInteraction(this.selectInteractionClick);
+    mapInstance.removeInteraction(this.drawPolygon);
+    mapInstance.addInteraction(this.drawRectangle);
+  } else if (te.target.value == "click") {
+    mapInstance.addInteraction(this.selectInteractionClick);
+    mapInstance.removeInteraction(this.drawPolygon);
+    mapInstance.removeInteraction(this.drawRectangle);
   };
+}
 
   const showModal = () => {
     setIsModalOpen(true);

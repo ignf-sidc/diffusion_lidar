@@ -41,7 +41,6 @@ export const App = (props) => {
     dalles_select: [],
     polygon_drawn: [],
     polygon_select_list_dalle: { polygon: null, dalles: [] },
-    selectedMode: "click",
     coordinate_mouse: null,
     expiresDateCookie: null,
     cookie_zoom_start: cookies.get("zoom") || 6,
@@ -56,6 +55,7 @@ export const App = (props) => {
     drawPolygon: null,
     drawRectangle: null,
   });
+  const [ selectedMode, setSelectedMode] = useState("click")
   const [zoom, setZoom] = useState(5);
   const [api_url, setApi_url] = useState();
   const name_file_txt = "liste_dalle.txt";
@@ -109,7 +109,7 @@ export const App = (props) => {
     },
   };
 
-  const mapInstance = new Map({
+  const mapInstance= new Map({
     target: "map",
     layers: [],
     view: new View({
@@ -845,7 +845,7 @@ export const App = (props) => {
   };
 
   return (
-    <MapContext.Provider value={{ MapState, setMapState, zoom }}>
+    <MapContext.Provider value={{ MapState, setMapState, zoom, selectedMode, setSelectedMode, mapInstance }}>
       <div className="map-container">
         <div id="map"></div>
         <div id="popup" className="ol-popup">
