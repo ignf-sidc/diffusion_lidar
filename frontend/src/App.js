@@ -543,7 +543,7 @@ class App extends Component {
   generate_multipolygon_bloc = () => {
     // fonction qui genere les blocs et qui est appellé à chaque fois qu'on bouge la carte, à un certain niveau de zoom
     // on fais appelle à l'api pour recuperer les blocs
-    axios.get(`${this.state.api_url}/api/data/get/blocs`).then((response) => {
+    axios.get(`http://localhost:8000/api/data/get/blocs`).then((response) => {
       // etant donner qu'on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
       this.drawnBlocsLayer.getSource().clear();
       // on parcours notre liste de blocs
@@ -839,7 +839,7 @@ class App extends Component {
 
           axios
             .get(
-              `${this.state.api_url}/api/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
+              `http://localhost:8000/api/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
             )
             .then((response) => {
               response.data.result.forEach((dalle) => {
@@ -1057,7 +1057,7 @@ class App extends Component {
     ];
 
     return (
-      <div>
+      <>
         <div className="map-container">
           <div id="map"></div>
           <div id="popup" className="ol-popup">
@@ -1189,34 +1189,19 @@ class App extends Component {
               </Space>
             </div>
           ) : null}
-          {this.state.coor_mouse !== null ? (
+        </div>
+
+        {this.state.coor_mouse !== null ? (
             <Card
-              style={{
-                position: "absolute",
-                bottom: 0,
-                width: "20%",
-                borderRadius: 0,
-                borderBottom: 0,
-                borderLeft: 0,
-                borderRight: 0,
-              }}
+            bodyStyle={{padding: "2px"}}
+            className="coor"  
             >
-              <p
-                className="center"
-                style={{
-                  margin: 0,
-                  fontSize: 16,
-                  fontWeight: "bold",
-                }}
-              >
-                Coordonnées (lambert 93) :<br></br>
+                Coordonnées (lambert 93) : 
                 {Math.round(this.state.coor_mouse[0])} -{" "}
                 {Math.round(this.state.coor_mouse[1])}
-              </p>
             </Card>
           ) : null}
-        </div>
-      </div>
+      </>
     );
   }
 }
