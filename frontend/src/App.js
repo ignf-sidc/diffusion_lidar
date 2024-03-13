@@ -24,7 +24,7 @@ import {
   Collapse,
   Popover,
   Modal,
-} from "antd";
+  } from "antd";
 import {
   UploadOutlined,
   DownloadOutlined,
@@ -1190,26 +1190,30 @@ class App extends Component {
             </div>
           ) : null}
           {this.state.coor_mouse !== null ? (
-            <div
+            <Card
               style={{
                 position: "absolute",
                 bottom: 0,
-                zIndex: 1,
-                transition: "all 0.2s",
+                width: "20%",
+                borderRadius: 0,
+                borderBottom: 0,
+                borderLeft: 0,
+                borderRight: 0,
               }}
             >
-              <Card>
-                <p
-                  style={{ margin: "0", fontSize: "16px", fontWeight: "bold", width: "auto" }}
-                  className="menu_mode center"
-                >
-                  <p>Coordonnées (lambert 93) :</p>
-                  <p>{" "}</p>
-                  {Math.round(this.state.coor_mouse[0])} -{" "}
-                  {Math.round(this.state.coor_mouse[1])}
-                </p>
-              </Card>
-            </div>
+              <p
+                className="center"
+                style={{
+                  margin: 0,
+                  fontSize: 16,
+                  fontWeight: "bold",
+                }}
+              >
+                Coordonnées (lambert 93) :<br></br>
+                {Math.round(this.state.coor_mouse[0])} -{" "}
+                {Math.round(this.state.coor_mouse[1])}
+              </p>
+            </Card>
           ) : null}
         </div>
       </div>
