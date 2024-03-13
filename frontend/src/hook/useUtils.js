@@ -180,6 +180,29 @@ function dalle_select_max_alert(
   }
   return true;
 }
+function click_select (
+  enitite_select,
+  vectorSourceGridDalle,
+  limit_dalle_select,
+  MapState,
+){
+  // fonction qui permet de limiter les dalles à 2500km
+  if (MapState.dalles_select.length >= limit_dalle_select) {
+    
+      remove_dalle_menu(
+        enitite_select,
+        MapState.dalles_select,
+        vectorSourceGridDalle,
+        list_dalle_in_polygon
+      );
+    message.error(
+      `le nombre de dalles séléctionnées dépasse ${limit_dalle_select} km²`
+    );
+    return false;
+  }
+  return true;
+};
+
 function generate_multipolygon_bloc(drawnBlocsLayer, vectorSourceBloc) {
   axios.get(`http://localhost:8000/api/data/get/blocs`).then((response) => {
     drawnBlocsLayer.getSource().clear();
@@ -250,4 +273,5 @@ export {
   dalle_select_max_alert,
   generate_multipolygon_bloc,
   list_dalles,
+  click_select
 };

@@ -28,6 +28,7 @@ import {
 } from "./hook/useRemove";
 import { handle_upload_remove, handle_mode_change } from "./hook/useHandle";
 import { Menu } from "./component/Menu/Menu";
+import { click_select } from "./hook/useUtils";
 
 export const MapContext = createContext(null);
 
@@ -282,34 +283,20 @@ export const App = (props) => {
   };
 
   const dalle_select_max_alert = (
-    emprise,
     enitite_select,
-    drawnPolygonsLayer,
-    vectorSourceDrawPolygon,
-    MapState,
     vectorSourceGridDalle,
-    limit_dalle_select
+    limit_dalle_select,
+    MapState,
   ) => {
     // fonction qui permet de limiter les dalles à 2500km
     if (MapState.dalles_select.length >= limit_dalle_select) {
-      if (emprise == "polygon") {
-        remove_polygon_menu(
-          enitite_select,
-          drawnPolygonsLayer,
-          vectorSourceDrawPolygon,
-          MapState.dalles_select,
-          vectorSourceGridDalle
-        );
-      } else if (emprise == "polygon_file") {
-        handle_upload_remove();
-      } else if (emprise == "click") {
+      
         remove_dalle_menu(
           enitite_select,
           MapState.dalles_select,
           vectorSourceGridDalle,
           list_dalle_in_polygon
         );
-      }
       message.error(
         `le nombre de dalles séléctionnées dépasse ${limit_dalle_select} km²`
       );
@@ -662,8 +649,6 @@ export const App = (props) => {
     selectInteractionClick.on("select", (event) => {
       if (event.selected.length > 0) {
         const featureSelect = event.selected[0];
-        // variable qui va valider si la dalle est dans liste sur laquelle on boucle
-        let newSelect = false;
 
         if (MapState.dalles_select.length === 0) {
           // au clique sur une dalle pas selectionner on l'ajoute à la liste
@@ -671,25 +656,28 @@ export const App = (props) => {
           featureSelect.setStyle(new Style(style_dalle.select));
           MapState.dalles_select.push(featureSelect);
         } else {
+          // variable qui va valider si la dalle est dans liste sur laquelle on boucle
+          let isSelected = false;
+
           MapState.dalles_select.forEach((dalle_select, index) => {
+
             if (
               dalle_select["values_"]["properties"]["id"] ===
               featureSelect["values_"]["properties"]["id"]
             ) {
-              // au clique sur une dalle déjà selectionner on la supprime
+              // Supression de la dalle séléctionné
               MapState.dalles_select.splice(index, 1);
               featureSelect.setStyle(null);
-              // on passe la variable à true pour dire qu'on vient de la selectionner
-              newSelect = true;
+              // La dalle etait séléctionné on passe à true
+              isSelected = true;
               list_dalle_in_polygon(null, "close");
             }
           });
-          // si la dalle n'est pas à true c'est quelle est dans la liste, donc on la deselectionne
-          if (!newSelect) {
+          if (!isSelected) {
             // au clique sur une dalle pas selectionner on l'ajoute à la liste
             featureSelect.setStyle(new Style(style_dalle.select));
             MapState.dalles_select.push(featureSelect);
-            dalle_select_max_alert("click", featureSelect);
+            click_select( featureSelect, vectorSourceGridDalle,limit_dalle_select, MapState);
           }
         }
       }
