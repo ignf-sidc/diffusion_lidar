@@ -543,7 +543,7 @@ class App extends Component {
   generate_multipolygon_bloc = () => {
     // fonction qui genere les blocs et qui est appellé à chaque fois qu'on bouge la carte, à un certain niveau de zoom
     // on fais appelle à l'api pour recuperer les blocs
-    axios.get(`http://localhost:8000/api/data/get/blocs`).then((response) => {
+    axios.get(`${this.state.api_url}/api/data/get/blocs`).then((response) => {
       // etant donner qu'on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
       this.drawnBlocsLayer.getSource().clear();
       // on parcours notre liste de blocs
@@ -839,7 +839,7 @@ class App extends Component {
 
           axios
             .get(
-              `http://localhost:8000/api/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
+              `${this.state.api_url}/api/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
             )
             .then((response) => {
               response.data.result.forEach((dalle) => {
