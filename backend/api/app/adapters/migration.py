@@ -126,7 +126,7 @@ class BucketAdapter:
             region_name=os.environ.get("REGION"),
         )
         self.bucket_name: str = str(os.environ.get("BUCKET", "BUCKET_NOT_DEF"))
-        self.link_download: str = "https://storage.sbg.cloud.ovh.net/v1/AUTH_63234f509d6048bca3c9fd7928720ca1/ppk-lidar"
+        self.link_download: str = ("https://storage.sbg.cloud.ovh.net/v1/AUTH_63234f509d6048bca3c9fd7928720ca1/ppk-lidar")
 
     def list_blocs(self) -> list[str]:
         """Liste les blocs sur le S3.

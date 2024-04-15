@@ -31,7 +31,7 @@ class BucketAdpater:
         )
 
         self.bucket_name = os.environ.get("BUCKET")
-        self.link_download = "https://storage.sbg.cloud.ovh.net/v1/AUTH_63234f509d6048bca3c9fd7928720ca1/ppk-lidar"
+        self.link_download = ("https://storage.sbg.cloud.ovh.net/v1/AUTH_63234f509d6048bca3c9fd7928720ca1/ppk-lidar")
 
     def read_file(self, name_file) -> None:
         """lecture d'un fichier sur ovh
