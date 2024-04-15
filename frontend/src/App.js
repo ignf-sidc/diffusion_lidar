@@ -55,7 +55,7 @@ export const App = (props) => {
     drawPolygon: null,
     drawRectangle: null,
   });
-  const [ selectedMode, setSelectedMode] = useState("click")
+  const [selectedMode, setSelectedMode] = useState("click");
   const [zoom, setZoom] = useState(5);
   const [api_url, setApi_url] = useState();
   const name_file_txt = "liste_dalle.txt";
@@ -109,7 +109,7 @@ export const App = (props) => {
     },
   };
 
-  const mapInstance= new Map({
+  const mapInstance = new Map({
     target: "map",
     layers: [],
     view: new View({
@@ -251,13 +251,15 @@ export const App = (props) => {
       }
     });
     setMapState({ ...MapState, dalles_select: dalles_select });
-    const status = dalle_select_max_alert(emprise,
+    const status = dalle_select_max_alert(
+      emprise,
       enitite_select,
       drawnPolygonsLayer,
       vectorSourceDrawPolygon,
       MapState,
       vectorSourceGridDalle,
-      limit_dalle_select);
+      limit_dalle_select
+    );
     return status;
   };
 
@@ -286,17 +288,16 @@ export const App = (props) => {
     enitite_select,
     vectorSourceGridDalle,
     limit_dalle_select,
-    MapState,
+    MapState
   ) => {
     // fonction qui permet de limiter les dalles à 2500km
     if (MapState.dalles_select.length >= limit_dalle_select) {
-      
-        remove_dalle_menu(
-          enitite_select,
-          MapState.dalles_select,
-          vectorSourceGridDalle,
-          list_dalle_in_polygon
-        );
+      remove_dalle_menu(
+        enitite_select,
+        MapState.dalles_select,
+        vectorSourceGridDalle,
+        list_dalle_in_polygon
+      );
       message.error(
         `le nombre de dalles séléctionnées dépasse ${limit_dalle_select} km²`
       );
@@ -306,63 +307,21 @@ export const App = (props) => {
   };
 
   const generate_multipolygon_bloc = (drawnBlocsLayer) => {
-    axios.get(`http://localhost:8000/api/data/get/blocs`).then((response) => {
-      drawnBlocsLayer.getSource().clear();
-      response.data.result.features.forEach((bloc) => {
-        const multiPolygonFeature = new Feature({
-          geometry: new MultiPolygon(bloc.geometry.coordinates),
+    axios
+      .get(`https://diffusion-lidarhd.ign.fr/api/data/get/blocs`)
+      .then((response) => {
+        drawnBlocsLayer.getSource().clear();
+        response.data.result.features.forEach((bloc) => {
+          const multiPolygonFeature = new Feature({
+            geometry: new MultiPolygon(bloc.geometry.coordinates),
+          });
+          multiPolygonFeature.setProperties({
+            id: bloc.properties.Nom_bloc,
+            superficie: bloc.properties.Superficie,
+          });
+          vectorSourceBloc.addFeature(multiPolygonFeature);
         });
-        multiPolygonFeature.setProperties({
-          id: bloc.properties.Nom_bloc,
-          superficie: bloc.properties.Superficie,
-        });
-        vectorSourceBloc.addFeature(multiPolygonFeature);
       });
-    });
-  };
-
-  const list_dalles = (MapState, vectorSourceGridDalle) => {
-    return (
-      <div>
-        <div className="outer-div">
-          {MapState.dalles_select.map((item, index) => (
-            <div className="liste_dalle inner-div" key={index}>
-              <button
-                className="map-icon-button"
-                onClick={() =>
-                  remove_dalle_menu(
-                    item,
-                    MapState.dalles_select,
-                    vectorSourceGridDalle,
-                    list_dalle_in_polygon,
-                    index
-                  )
-                }
-              >
-                <FaTimes style={{ color: "red" }} />
-              </button>
-              <button
-                className="map-icon-button"
-                onClick={() => zoom_to_polygon(item, 12, mapInstance)}
-              >
-                <FaMapMarker />
-              </button>
-              <a
-                href={item.values_.properties.url_download}
-                onMouseEnter={() =>
-                  pointer_move_dalle_menu(item.values_.properties.id)
-                }
-                onMouseLeave={() =>
-                  quit_pointer_move_dalle_menu(item.values_.properties.id)
-                }
-              >
-                {item.values_.properties.id}
-              </a>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
   };
 
   const features = drawnPolygonsLayer.getSource().getFeatures();
@@ -492,42 +451,6 @@ export const App = (props) => {
     },
   ];
 
-  const items_collapse_liste_produit = [
-    {
-      key: "1",
-      label: "Liste des nuages de points classés",
-      children: list_dalles,
-      extra: (
-        <DeleteOutlined
-          style={{ color: "red" }}
-          onClick={() =>
-            remove_all_dalle_menu(
-              event,
-              vectorSourceGridDalle,
-              dalles_select,
-              drawnPolygonsLayer
-            )
-          }
-        />
-      ),
-    },
-    {
-      key: "2",
-      label: "Liste des MNS",
-      children: <p>données pas encore disponible</p>,
-    },
-    {
-      key: "3",
-      label: "Liste des MNT",
-      children: <p>données pas encore disponible</p>,
-    },
-    {
-      key: "4",
-      label: "Autres",
-      children: <p>données pas encore disponible</p>,
-    },
-  ];
-
   useEffect(() => {
     if (MapState) {
       proj4.defs(
@@ -585,7 +508,6 @@ export const App = (props) => {
     drawnBlocsLayer,
     overlay
   ) => {
-
     let layers = mapInstance.getLayers();
     layers.extend([
       new olExtended.layer.GeoportalWMTS({
@@ -621,18 +543,20 @@ export const App = (props) => {
       if (event.selected.length > 0) {
         const selectedFeature = event.selected[0];
         // quand on survole une dalle cliquer on met le style d'une dalle cliquer
-        style_dalle_select(selectedFeature,MapState);
+        style_dalle_select(selectedFeature, MapState);
       }
       // quand on quitte la dalle survolé
       if (event.deselected.length > 0) {
         if (MapState.old_dalles_select !== null) {
-          const selected = style_dalle_select(MapState.old_dalles_select, MapState);
+          const selected = style_dalle_select(
+            MapState.old_dalles_select,
+            MapState
+          );
           if (!selected) {
             // si on survol une dalle non cliqué alors on remet le style null
             MapState.old_dalles_select.setStyle(null);
           }
         }
-        
       }
       // on stocke la derniere dalle survoler pour modifier le style
       MapState.old_dalles_select = event.selected[0];
@@ -654,13 +578,13 @@ export const App = (props) => {
           // au clique sur une dalle pas selectionner on l'ajoute à la liste
 
           featureSelect.setStyle(new Style(style_dalle.select));
-          MapState.dalles_select.push(featureSelect);
+          const add_dalles = MapState.dalles_select.push(featureSelect);
+          setMapState({ ...MapState, dalles_select: [featureSelect] });
         } else {
           // variable qui va valider si la dalle est dans liste sur laquelle on boucle
           let isSelected = false;
 
           MapState.dalles_select.forEach((dalle_select, index) => {
-
             if (
               dalle_select["values_"]["properties"]["id"] ===
               featureSelect["values_"]["properties"]["id"]
@@ -676,8 +600,18 @@ export const App = (props) => {
           if (!isSelected) {
             // au clique sur une dalle pas selectionner on l'ajoute à la liste
             featureSelect.setStyle(new Style(style_dalle.select));
-            MapState.dalles_select.push(featureSelect);
-            click_select( featureSelect, vectorSourceGridDalle,limit_dalle_select, MapState);
+
+            const add_dalles = MapState.dalles_select.push(featureSelect);
+            setMapState({
+              ...MapState,
+              dalles_select: [...MapState.dalles_select, featureSelect],
+            });
+            click_select(
+              featureSelect,
+              vectorSourceGridDalle,
+              limit_dalle_select,
+              MapState
+            );
           }
         }
       }
@@ -691,7 +625,6 @@ export const App = (props) => {
           featureDeselect.setStyle(null);
         }
       }
-      setMapState({ ...MapState, dalles_select: event.selected[0] });
     });
 
     // Créer une interaction de tracé de polygon
@@ -746,7 +679,6 @@ export const App = (props) => {
         overlay.getElement().innerHTML = selectedFeature["values_"]["id"];
         overlay.setPosition([centerX, centerY]);
         overlay.getElement().style.display = "block";
-
       }
     });
 
@@ -799,7 +731,7 @@ export const App = (props) => {
 
         axios
           .get(
-            `http://localhost:8000/api/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
+            `https://diffusion-lidarhd.ign.fr/api/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
           )
           .then((response) => {
             response.data.result.forEach((dalle) => {
@@ -845,17 +777,27 @@ export const App = (props) => {
   };
 
   return (
-    <MapContext.Provider value={{ MapState, setMapState, zoom, selectedMode, setSelectedMode, mapInstance }}>
+    <MapContext.Provider
+      value={{
+        MapState,
+        zoom,
+        selectedMode,
+        setSelectedMode,
+        mapInstance,
+        dalleLayer,
+        style_dalle
+      }}
+    >
       <div className="map-container">
         <div id="map"></div>
         <div id="popup" className="ol-popup">
           <div id="popup-content"></div>
         </div>
       </div>
-        <Menu
-          zoom_display_dalle={zoom_display_dalle}
-          limit_dalle_select={limit_dalle_select}
-        />
+      <Menu
+        zoom_display_dalle={zoom_display_dalle}
+        limit_dalle_select={limit_dalle_select}
+      />
     </MapContext.Provider>
   );
 };

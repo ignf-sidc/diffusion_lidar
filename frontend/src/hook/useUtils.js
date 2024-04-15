@@ -1,3 +1,5 @@
+import { FaTimes, FaMapMarker } from "react-icons/fa";
+import { zoom_to_polygon } from "./useZoom";
 function style_dalle_select(feature, MapState) {
   // fonction permettant d'ajuster le style au survol d'une dalle
   // on parcout la liste des dalles selectionner
@@ -78,17 +80,28 @@ function list_dalle_in_polygon(
   }
 }
 
-function pointer_move_dalle_menu(id_dalle, style_dalle) {
+function pointer_move_dalle_menu(id_dalle, style_dalle, vectorSourceGridDalle) {
   // on parcours la liste des dalles
+  console.log('hello', vectorSourceGridDalle);
+
   vectorSourceGridDalle.getFeatures().forEach((feature) => {
+    console.log('heee');
     // son recupere la feature avec la meme id que la dalle survolé dans le menu
+    console.log(feature);
     if (feature.values_.properties.id === id_dalle) {
-      feature.setStyle(new Style(style_dalle.pointer_move_dalle_menu));
+      console.log('hello');
+      feature.setStyle(
+        new Style({
+          fill: new Fill({
+            color: "yellow",
+          }),
+        })
+      );
     }
   });
 }
 
-function quit_pointer_move_dalle_menu(id_dalle) {
+function quit_pointer_move_dalle_menu(id_dalle, vectorSourceGridDalle) {
   // on parcours la liste des dalles
   vectorSourceGridDalle.getFeatures().forEach((feature) => {
     // son recupere la feature avec la meme id que la dalle survolé dans le menu
@@ -180,28 +193,27 @@ function dalle_select_max_alert(
   }
   return true;
 }
-function click_select (
+function click_select(
   enitite_select,
   vectorSourceGridDalle,
   limit_dalle_select,
-  MapState,
-){
+  MapState
+) {
   // fonction qui permet de limiter les dalles à 2500km
   if (MapState.dalles_select.length >= limit_dalle_select) {
-    
-      remove_dalle_menu(
-        enitite_select,
-        MapState.dalles_select,
-        vectorSourceGridDalle,
-        list_dalle_in_polygon
-      );
+    remove_dalle_menu(
+      enitite_select,
+      MapState.dalles_select,
+      vectorSourceGridDalle,
+      list_dalle_in_polygon
+    );
     message.error(
       `le nombre de dalles séléctionnées dépasse ${limit_dalle_select} km²`
     );
     return false;
   }
   return true;
-};
+}
 
 function generate_multipolygon_bloc(drawnBlocsLayer, vectorSourceBloc) {
   axios.get(`http://localhost:8000/api/data/get/blocs`).then((response) => {
@@ -219,7 +231,12 @@ function generate_multipolygon_bloc(drawnBlocsLayer, vectorSourceBloc) {
   });
 }
 
-function list_dalles(MapState, vectorSourceGridDalle) {
+function list_dalles(
+  MapState,
+  mapInstance,
+  vectorSourceGridDalle,
+  style_dalle
+) {
   return (
     <div>
       <div className="outer-div">
@@ -241,17 +258,24 @@ function list_dalles(MapState, vectorSourceGridDalle) {
             </button>
             <button
               className="map-icon-button"
-              onClick={() => zoom_to_polygon(item, 12, MapState.mapInstance)}
+              onClick={() => zoom_to_polygon(item, 12, mapInstance)}
             >
               <FaMapMarker />
             </button>
             <a
               href={item.values_.properties.url_download}
               onMouseEnter={() =>
-                pointer_move_dalle_menu(item.values_.properties.id)
+                pointer_move_dalle_menu(
+                  item.values_.properties.id,
+                  style_dalle,
+                  vectorSourceGridDalle
+                )
               }
               onMouseLeave={() =>
-                quit_pointer_move_dalle_menu(item.values_.properties.id)
+                quit_pointer_move_dalle_menu(
+                  item.values_.properties.id,
+                  vectorSourceGridDalle
+                )
               }
             >
               {item.values_.properties.id}
@@ -273,5 +297,5 @@ export {
   dalle_select_max_alert,
   generate_multipolygon_bloc,
   list_dalles,
-  click_select
+  click_select,
 };

@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import type { RadioChangeEvent } from "antd";
+import { RadioChangeEvent } from "antd";
 import PropTypes from "prop-types";
 import { MenuMode } from "./MenuMode.js";
 import { MapContext } from "../../App.js";
@@ -8,36 +8,46 @@ import {
   handle_mode_change,
   handle_telechargement,
 } from "../../hook/useHandle.js";
-import { remove_all_dalle_menu, remove_all_polygons_menu } from "../../hook/useRemove.js";
+import {
+  remove_all_dalle_menu,
+  remove_all_polygons_menu,
+} from "../../hook/useRemove.js";
 import { listPolygons, list_polygons } from "./ListPolygon.js";
 import {
   DownloadOutlined,
   DeleteOutlined,
   QuestionCircleOutlined,
 } from "@ant-design/icons";
-import { listDalles } from "./ListDalles.js";
-
+import { list_dalles } from "../../hook/useUtils.js";
 export const Menu = (props) => {
-  const { MapState, setMapState, zoom, selectedMode, setSelectedMode, mapInstance } = useContext(MapContext);
+  const {
+    MapState,
+    setMapState,
+    zoom,
+    selectedMode,
+    setSelectedMode,
+    mapInstance,
+    dalleLayer,
+    style_dalle,
+  } = useContext(MapContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const onChange = (e: RadioChangeEvent) => {
     setSelectedMode(e.target.value);
-    console.log(mapInstance);
     if (e.target.value == "polygon") {
-    mapInstance.removeInteraction(this.selectInteractionClick);
-    mapInstance.addInteraction(this.drawPolygon);
-    mapInstance.removeInteraction(this.drawRectangle);
-  } else if (e.target.value == "rectangle") {
-    mapInstance.removeInteraction(this.selectInteractionClick);
-    mapInstance.removeInteraction(this.drawPolygon);
-    mapInstance.addInteraction(this.drawRectangle);
-  } else if (te.target.value == "click") {
-    mapInstance.addInteraction(this.selectInteractionClick);
-    mapInstance.removeInteraction(this.drawPolygon);
-    mapInstance.removeInteraction(this.drawRectangle);
+      mapInstance.removeInteraction(this.selectInteractionClick);
+      mapInstance.addInteraction(this.drawPolygon);
+      mapInstance.removeInteraction(this.drawRectangle);
+    } else if (e.target.value == "rectangle") {
+      mapInstance.removeInteraction(this.selectInteractionClick);
+      mapInstance.removeInteraction(this.drawPolygon);
+      mapInstance.addInteraction(this.drawRectangle);
+    } else if (te.target.value == "click") {
+      mapInstance.addInteraction(this.selectInteractionClick);
+      mapInstance.removeInteraction(this.drawPolygon);
+      mapInstance.removeInteraction(this.drawRectangle);
+    }
   };
-}
 
   const showModal = () => {
     setIsModalOpen(true);
@@ -65,7 +75,12 @@ export const Menu = (props) => {
     {
       key: "1",
       label: "Liste des nuages de points classés",
-      children: listDalles,
+      children: list_dalles(
+        MapState,
+        mapInstance,
+        dalleLayer,
+        style_dalle
+      ),
       extra: (
         <DeleteOutlined
           style={{ color: "red" }}
@@ -196,7 +211,6 @@ export const Menu = (props) => {
                   height="315"
                   src="https://www.youtube.com/embed/-YomQJC6S38?si=ycCCdLbQ4KmMNSqn&amp;start=59"
                   title="YouTube video player"
-                  frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 ></iframe>
