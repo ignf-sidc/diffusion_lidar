@@ -24,7 +24,7 @@ import {
   Collapse,
   Popover,
   Modal,
-  } from "antd";
+} from "antd";
 import {
   UploadOutlined,
   DownloadOutlined,
@@ -543,22 +543,26 @@ class App extends Component {
   generate_multipolygon_bloc = () => {
     // fonction qui genere les blocs et qui est appellé à chaque fois qu'on bouge la carte, à un certain niveau de zoom
     // on fais appelle à l'api pour recuperer les blocs
-    axios.get(`https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:bloc&outputFormat=application/json`).then((response) => {
-      // etant donner qu'on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
-      this.drawnBlocsLayer.getSource().clear();
-      // on parcours notre liste de blocs
-      response.data.features.forEach((bloc) => {
-        // on trace nos bblocs
-        const multiPolygonFeature = new Feature({
-          geometry: new MultiPolygon(bloc.geometry.coordinates),
+    axios
+      .get(
+        `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:bloc&outputFormat=application/json`
+      )
+      .then((response) => {
+        // etant donner qu'on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
+        this.drawnBlocsLayer.getSource().clear();
+        // on parcours notre liste de blocs
+        response.data.features.forEach((bloc) => {
+          // on trace nos bblocs
+          const multiPolygonFeature = new Feature({
+            geometry: new MultiPolygon(bloc.geometry.coordinates),
+          });
+          multiPolygonFeature.setProperties({
+            id: bloc.properties.name,
+            superficie: bloc.properties.area,
+          });
+          this.vectorSourceBloc.addFeature(multiPolygonFeature);
         });
-        multiPolygonFeature.setProperties({
-          id: bloc.properties.name,
-          superficie: bloc.properties.area,
-        });
-        this.vectorSourceBloc.addFeature(multiPolygonFeature);
       });
-    });
   };
 
   handleTelechargement = () => {
@@ -839,22 +843,24 @@ class App extends Component {
 
           axios
             .get(
-              `${this.state.api_url}/api/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
+              `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
             )
             .then((response) => {
-              response.data.result.forEach((dalle) => {
-                const dalle_polygon = JSON.parse(dalle.polygon);
-                const dalleFeature = new Feature({
-                  geometry: new Polygon(dalle_polygon.coordinates),
-                });
-                const regex = /LHD_FXX_(\d{4}_\d{4})/;
-                const name_dalle = dalle.name.match(regex);
-                dalleFeature.setProperties({
-                  properties: {
-                    id: name_dalle[0],
-                    url_download: dalle.name,
-                  },
-                });
+              console.log(response);
+              response.data.features.forEach((dalle) => {
+                console.log(dalle);
+                  const dalle_polygon = dalle.geometry;
+                  const dalleFeature = new Feature({
+                    geometry: new Polygon(dalle_polygon.coordinates),
+                  });
+                  const regex = /LHD_FXX_(\d{4}_\d{4})/;
+                  const name_dalle = dalle.properties.name.match(regex);
+                  dalleFeature.setProperties({
+                    properties: {
+                      id: name_dalle[0],
+                      url_download: dalle.properties.url,
+                    },
+                  });
                 // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
                 this.dalles_select.forEach((dalle_select) => {
                   if (
@@ -1192,15 +1198,11 @@ class App extends Component {
         </div>
 
         {this.state.coor_mouse !== null ? (
-            <Card
-            bodyStyle={{padding: "2px"}}
-            className="coor"  
-            >
-                Coordonnées (lambert 93) : 
-                {Math.round(this.state.coor_mouse[0])} -{" "}
-                {Math.round(this.state.coor_mouse[1])}
-            </Card>
-          ) : null}
+          <Card bodyStyle={{ padding: "2px" }} className="coor">
+            Coordonnées (lambert 93) :{Math.round(this.state.coor_mouse[0])} -{" "}
+            {Math.round(this.state.coor_mouse[1])}
+          </Card>
+        ) : null}
       </>
     );
   }
