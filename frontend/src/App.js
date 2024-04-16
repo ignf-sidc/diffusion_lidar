@@ -590,6 +590,30 @@ class App extends Component {
     document.body.removeChild(a);
   };
 
+  handleGetDalle = (dalle) => {
+    console.log(dalle);
+    const dalle_polygon = dalle.geometry;
+    const dalleFeature = new Feature({
+      geometry: new Polygon(dalle_polygon.coordinates),
+    });
+    const regex = /LHD_FXX_(\d{4}_\d{4})/;
+    const name_dalle = dalle.properties.name.match(regex);
+    dalleFeature.setProperties({
+      properties: {
+        id: name_dalle[0],
+        url_download: dalle.properties.url,
+      },
+    });
+    // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
+    this.dalles_select.forEach((dalle_select) => {
+      if (dalle_select["values_"]["properties"]["id"] === name_dalle[0]) {
+        dalleFeature.setStyle(new Style(this.style_dalle.select));
+      }
+    });
+    // Ajoutez des polygons à la couche vecteur
+    this.vectorSourceGridDalle.addFeature(dalleFeature);
+  };
+
   componentDidMount() {
     // déclaration de la projection lamb93
     proj4.defs(
@@ -846,33 +870,23 @@ class App extends Component {
               `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
             )
             .then((response) => {
-              console.log(response);
               response.data.features.forEach((dalle) => {
-                console.log(dalle);
-                  const dalle_polygon = dalle.geometry;
-                  const dalleFeature = new Feature({
-                    geometry: new Polygon(dalle_polygon.coordinates),
-                  });
-                  const regex = /LHD_FXX_(\d{4}_\d{4})/;
-                  const name_dalle = dalle.properties.name.match(regex);
-                  dalleFeature.setProperties({
-                    properties: {
-                      id: name_dalle[0],
-                      url_download: dalle.properties.url,
-                    },
-                  });
-                // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
-                this.dalles_select.forEach((dalle_select) => {
-                  if (
-                    dalle_select["values_"]["properties"]["id"] ===
-                    name_dalle[0]
-                  ) {
-                    dalleFeature.setStyle(new Style(this.style_dalle.select));
-                  }
-                });
-                // Ajoutez des polygons à la couche vecteur
-                this.vectorSourceGridDalle.addFeature(dalleFeature);
+                this.handleGetDalle(dalle);
               });
+
+              // vérification nombre de dalles
+
+              if (response.data.totalFeatures > 5000) {
+                axios
+                  .get(
+                    `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}&count=5000&startIndex=5000`
+                  )
+                  .then((response) => {
+                    response.data.features.forEach((dalle) => {
+                      this.handleGetDalle(dalle);
+                    });
+                  });
+              }
             });
         } else {
           this.handleModeChange({ target: { value: "click" } });
