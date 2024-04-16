@@ -543,18 +543,18 @@ class App extends Component {
   generate_multipolygon_bloc = () => {
     // fonction qui genere les blocs et qui est appellé à chaque fois qu'on bouge la carte, à un certain niveau de zoom
     // on fais appelle à l'api pour recuperer les blocs
-    axios.get(`${this.state.api_url}/api/data/get/blocs`).then((response) => {
+    axios.get(`https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:bloc&outputFormat=application/json`).then((response) => {
       // etant donner qu'on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
       this.drawnBlocsLayer.getSource().clear();
       // on parcours notre liste de blocs
-      response.data.result.features.forEach((bloc) => {
+      response.data.features.forEach((bloc) => {
         // on trace nos bblocs
         const multiPolygonFeature = new Feature({
           geometry: new MultiPolygon(bloc.geometry.coordinates),
         });
         multiPolygonFeature.setProperties({
-          id: bloc.properties.Nom_bloc,
-          superficie: bloc.properties.Superficie,
+          id: bloc.properties.name,
+          superficie: bloc.properties.area,
         });
         this.vectorSourceBloc.addFeature(multiPolygonFeature);
       });
