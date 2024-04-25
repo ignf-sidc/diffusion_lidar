@@ -39,6 +39,10 @@ import { Typography } from "antd";
 
 const { Title } = Typography;
 
+axios.defaults.headers = {
+  'Cache-Control': 'no-cache',
+};
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -877,6 +881,7 @@ class App extends Component {
               // vérification nombre de dalles
 
               if (response.data.totalFeatures > 5000) {
+                
                 axios
                   .get(
                     `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}&count=5000&startIndex=5000`
