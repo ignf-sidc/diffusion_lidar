@@ -138,9 +138,33 @@ function handle_telechargement() {
   document.body.removeChild(a);
 }
 
+function handle_get_dalle() {
+  const dalle_polygon = dalle.geometry;
+  const dalleFeature = new Feature({
+    geometry: new Polygon(dalle_polygon.coordinates),
+  });
+  const regex = /LHD_FXX_(\d{4}_\d{4})/;
+  const name_dalle = dalle.properties.name.match(regex);
+  dalleFeature.setProperties({
+    properties: {
+      id: name_dalle[0],
+      url_download: dalle.properties.url,
+    },
+  });
+  // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
+  this.dalles_select.forEach((dalle_select) => {
+    if (dalle_select["values_"]["properties"]["id"] === name_dalle[0]) {
+      dalleFeature.setStyle(new Style(this.style_dalle.select));
+    }
+  });
+  // Ajoutez des polygons à la couche vecteur
+  this.vectorSourceGridDalle.addFeature(dalleFeature);
+};
+
 export {
   handle_mode_change,
   handle_upload,
   handle_upload_remove,
   handle_telechargement,
+  handle_get_dalle,
 };

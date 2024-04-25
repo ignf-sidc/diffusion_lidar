@@ -308,18 +308,23 @@ export const App = (props) => {
 
   const generate_multipolygon_bloc = (drawnBlocsLayer) => {
     axios
-      .get(`https://diffusion-lidarhd.ign.fr/api/data/get/blocs`)
+      .get(
+        `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:bloc&outputFormat=application/json`
+      )
       .then((response) => {
-        drawnBlocsLayer.getSource().clear();
-        response.data.result.features.forEach((bloc) => {
+        // etant donner qu'on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
+        this.drawnBlocsLayer.getSource().clear();
+        // on parcours notre liste de blocs
+        response.data.features.forEach((bloc) => {
+          // on trace nos bblocs
           const multiPolygonFeature = new Feature({
             geometry: new MultiPolygon(bloc.geometry.coordinates),
           });
           multiPolygonFeature.setProperties({
-            id: bloc.properties.Nom_bloc,
-            superficie: bloc.properties.Superficie,
+            id: bloc.properties.name,
+            superficie: bloc.properties.area,
           });
-          vectorSourceBloc.addFeature(multiPolygonFeature);
+          this.vectorSourceBloc.addFeature(multiPolygonFeature);
         });
       });
   };
@@ -731,47 +736,30 @@ export const App = (props) => {
 
         axios
           .get(
-            `https://diffusion-lidarhd.ign.fr/api/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
+            `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
           )
           .then((response) => {
-            response.data.result.forEach((dalle) => {
-              const dalle_polygon = JSON.parse(dalle.polygon);
-              const dalleFeature = new Feature({
-                geometry: new Polygon(dalle_polygon.coordinates),
-              });
-              const regex = /LHD_FXX_(\d{4}_\d{4})/;
-              const name_dalle = dalle.name.match(regex);
-              dalleFeature.setProperties({
-                properties: {
-                  id: name_dalle[0],
-                  url_download: dalle.name,
-                },
-              });
-              // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
-              MapState.dalles_select.forEach((dalle_select) => {
-                if (
-                  dalle_select["values_"]["properties"]["id"] === name_dalle[0]
-                ) {
-                  dalleFeature.setStyle(new Style(style_dalle.select));
-                }
-              });
-              // Ajoutez des polygons à la couche vecteur
-              vectorSourceGridDalle.addFeature(dalleFeature);
+            response.data.features.forEach((dalle) => {
+              this.handleGetDalle(dalle);
             });
+
+            // vérification nombre de dalles
+
+            if (response.data.totalFeatures > 5000) {
+              axios
+                .get(
+                  `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}&count=5000&startIndex=5000`
+                )
+                .then((response) => {
+                  response.data.features.forEach((dalle) => {
+                    this.handleGetDalle(dalle);
+                  });
+                });
+            }
           });
       } else {
-        setMapState({
-          ...MapState,
-          selectedMode: handle_mode_change(
-            { target: { value: "click" } },
-            mapInstance,
-            MapState.selectedMode,
-            selectInteractionClick,
-            drawPolygon,
-            drawRectangle
-          ),
-        });
-        generate_multipolygon_bloc(drawnBlocsLayer);
+        handle_mode_change({ target: { value: "click" } });
+        this.generate_multipolygon_bloc();
       }
     });
   };
@@ -785,7 +773,7 @@ export const App = (props) => {
         setSelectedMode,
         mapInstance,
         dalleLayer,
-        style_dalle
+        style_dalle,
       }}
     >
       <div className="map-container">

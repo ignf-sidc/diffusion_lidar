@@ -82,14 +82,14 @@ function list_dalle_in_polygon(
 
 function pointer_move_dalle_menu(id_dalle, style_dalle, vectorSourceGridDalle) {
   // on parcours la liste des dalles
-  console.log('hello', vectorSourceGridDalle);
+  console.log("hello", vectorSourceGridDalle);
 
   vectorSourceGridDalle.getFeatures().forEach((feature) => {
-    console.log('heee');
+    console.log("heee");
     // son recupere la feature avec la meme id que la dalle survolé dans le menu
     console.log(feature);
     if (feature.values_.properties.id === id_dalle) {
-      console.log('hello');
+      console.log("hello");
       feature.setStyle(
         new Style({
           fill: new Fill({
@@ -216,19 +216,25 @@ function click_select(
 }
 
 function generate_multipolygon_bloc(drawnBlocsLayer, vectorSourceBloc) {
-  axios.get(`http://localhost:8000/api/data/get/blocs`).then((response) => {
-    drawnBlocsLayer.getSource().clear();
-    response.data.result.features.forEach((bloc) => {
-      const multiPolygonFeature = new Feature({
-        geometry: new MultiPolygon(bloc.geometry.coordinates),
+  axios
+    .get(
+      `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:bloc&outputFormat=application/json`
+    )
+    .then((response) => {
+
+        // on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
+      drawnBlocsLayer.getSource().clear();
+      response.data.result.features.forEach((bloc) => {
+        const multiPolygonFeature = new Feature({
+          geometry: new MultiPolygon(bloc.geometry.coordinates),
+        });
+        multiPolygonFeature.setProperties({
+          id: bloc.properties.Nom_bloc,
+          superficie: bloc.properties.Superficie,
+        });
+        vectorSourceBloc.addFeature(multiPolygonFeature);
       });
-      multiPolygonFeature.setProperties({
-        id: bloc.properties.Nom_bloc,
-        superficie: bloc.properties.Superficie,
-      });
-      vectorSourceBloc.addFeature(multiPolygonFeature);
     });
-  });
 }
 
 function list_dalles(
