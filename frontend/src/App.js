@@ -19,116 +19,109 @@ import { DeleteOutlined } from "@ant-design/icons";
 import { get as getProjection } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import proj4 from "proj4";
-import { zoom_to_polygon } from "./hook/useZoom";
-import {
-  remove_all_dalle_menu,
-  remove_polygon_menu,
-  remove_dalle_menu,
-  remove_all_polygons_menu,
-} from "./hook/useRemove";
-import { handle_upload_remove, handle_mode_change } from "./hook/useHandle";
-import { Menu } from "./component/Menu/Menu";
-import { click_select } from "./hook/useUtils";
 
-export const MapContext = createContext(null);
+import { Typography } from "antd";
 
-export const App = (props) => {
-  const { cookies } = props;
-  const [MapState, setMapState] = useState({
-    coordinate: null,
-    showInfobulle: false,
-    selectedFeatures: [],
-    dalles_select: [],
-    polygon_drawn: [],
-    polygon_select_list_dalle: { polygon: null, dalles: [] },
-    coordinate_mouse: null,
-    expiresDateCookie: null,
-    cookie_zoom_start: cookies.get("zoom") || 6,
-    cookie_coor_start: cookies.get("coor") || [
-      288074.8449901076, 6247982.515792289,
-    ],
-    fileUpload: [],
-    dalles_select: [],
-    polygon_drawn: [],
-    old_dalles_select: null,
-    selectInteractionClick: null,
-    drawPolygon: null,
-    drawRectangle: null,
-  });
-  const [selectedMode, setSelectedMode] = useState("click");
-  const [zoom, setZoom] = useState(5);
-  const [api_url, setApi_url] = useState();
-  const name_file_txt = "liste_dalle.txt";
-  const day_cookie_expiration = 7;
-  const limit_dalle_select = 2500;
-  const zoom_display_dalle = 11;
-  let vectorSourceGridDalle = new VectorSource();
-  let vectorSourceDrawPolygon = new VectorSource();
-  let vectorSourceFilePolygon = new VectorSource();
-  let vectorSourceBloc = new VectorSource();
-  const dalleLayer = new VectorLayer({
-    source: vectorSourceGridDalle,
-    style: new Style({
-      fill: new Fill({
-        color: "rgba(0, 0, 255, 0.1)",
-      }),
-      stroke: new Stroke({
-        color: "black",
-        width: 0.5,
-      }),
-    }),
-  });
+const { Title } = Typography;
 
-  const drawnPolygonsLayer = new VectorLayer({
-    source: vectorSourceDrawPolygon,
-  });
-  const filePolygonsLayer = new VectorLayer({
-    source: vectorSourceFilePolygon,
-  });
-  const drawnBlocsLayer = new VectorLayer({
-    source: vectorSourceBloc,
-  });
-  const style_dalle = {
-    select: {
-      fill: new Fill({
-        color: "rgba(112, 119, 122, 0.5)",
+axios.defaults.headers = {
+  'Cache-Control': 'no-cache',
+};
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    // on défini un state pour savoir quand ouvrir la modal d'information TODO: Reprendre les définitions de state
+
+    this.state = {
+      isModalOpen: false,
+      coordinate: null,
+      showInfobulle: false,
+      selectedFeatures: [],
+      dalles_select: [],
+      polygon_drawn: [],
+      mapInstance: null,
+      polygon_select_list_dalle: { polygon: null, dalles: [] },
+      selectedMode: "click",
+      zoom: 5,
+      coor_mouse: null,
+      zoom_start: 6,
+      coor_start: [288074.8449901076, 6247982.515792289],
+      api_url: null,
+      fileUpload: [],
+    };
+    this.name_file_txt = "liste_dalle.txt";
+    this.dalles_select = [];
+    this.polygon_drawn = [];
+    this.limit_dalle_select = 2500;
+    this.old_dalles_select = null;
+    this.selectInteractionClick = null;
+    this.drawPolygon = null;
+    this.drawRectangle = null;
+    this.zoom_dispaly_dalle = 11;
+    this.display_couche_gestionnaire = [
+      "Plan IGN v2",
+      "Photographies aériennes",
+    ];
+    this.vectorSourceGridDalle = new VectorSource();
+    this.vectorSourceDrawPolygon = new VectorSource();
+    this.vectorSourceFilePolygon = new VectorSource();
+    this.vectorSourceBloc = new VectorSource();
+    this.vectorLayer = new VectorLayer({
+      source: this.vectorSourceGridDalle,
+      style: new Style({
+        fill: new Fill({
+          color: "rgba(0, 0, 255, 0.1)",
+        }),
+        stroke: new Stroke({
+          color: "black",
+          width: 0.5,
+        }),
       }),
-      stroke: new Stroke({
-        color: "rgba(112, 119, 122)",
-        width: 2,
-      }),
-    },
-    pointer_move_dalle_menu: {
-      fill: new Fill({
-        color: "yellow",
-      }),
-      stroke: new Stroke({
-        color: "black",
-        width: 2,
-      }),
-    },
+    });
+    this.drawnPolygonsLayer = new VectorLayer({
+      source: this.vectorSourceDrawPolygon,
+    });
+    this.filePolygonsLayer = new VectorLayer({
+      source: this.vectorSourceFilePolygon,
+    });
+    this.drawnBlocsLayer = new VectorLayer({
+      source: this.vectorSourceBloc,
+    });
+    this.style_dalle = {
+      select: {
+        fill: new Fill({
+          color: "#20bf0a",
+        }),
+        stroke: new Stroke({
+          color: "rgba(112, 119, 122)",
+          width: 2,
+        }),
+      },
+      pointer_move_dalle_menu: {
+        fill: new Fill({
+          color: "#e8f54a",
+        }),
+        stroke: new Stroke({
+          color: "black",
+          width: 2,
+        }),
+      },
+    };
+  }
+
+  showModal = () => {
+    this.setState({ isModalOpen: true });
   };
 
-  const mapInstance = new Map({
-    target: "map",
-    layers: [],
-    view: new View({
-      projection: getProjection("EPSG:2154"),
-      center: MapState.cookie_coor_start,
-      zoom: MapState.cookie_zoom_start,
-      maxZoom: 16,
-    }),
-  });
+  handleOk = () => {
+    this.setState({ isModalOpen: false });
+  };
+  handleCancel = () => {
+    this.setState({ isModalOpen: false });
+  };
 
-  const overlay = new Overlay({
-    element: document.getElementById("popup"),
-    autoPan: false,
-    autoPanAnimation: {
-      duration: 250,
-    },
-  });
-
-  const style_dalle_select = (feature, MapState) => {
+  style_dalle_select(feature) {
     // fonction permettant d'ajuster le style au survol d'une dalle
     // on parcout la liste des dalles selectionner
     for (const dalle_select of MapState.dalles_select) {
@@ -306,7 +299,9 @@ export const App = (props) => {
     return true;
   };
 
-  const generate_multipolygon_bloc = (drawnBlocsLayer) => {
+  generate_multipolygon_bloc = () => {
+    // fonction qui genere les blocs et qui est appellé à chaque fois qu'on bouge la carte, à un certain niveau de zoom
+    // on fais appelle à l'api pour recuperer les blocs
     axios
       .get(
         `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:bloc&outputFormat=application/json`
@@ -329,140 +324,62 @@ export const App = (props) => {
       });
   };
 
-  const features = drawnPolygonsLayer.getSource().getFeatures();
+  handleTelechargement = () => {
+    // fonction qui va permettre de telecharger le fichier txt avec son contenu
+    // variable qui aura le contenu
+    let contentTxt = "";
+    // ajout de chaque dalle dans le contenu du txt
+    this.dalles_select.forEach((dalle) => {
+      contentTxt += dalle.values_.properties.url_download + "\n";
+    });
+    // Créer un objet Blob avec le contenu texte
+    const blob = new Blob([contentTxt], { type: "text/plain" });
+    // Créer une URL pour le Blob
+    const blobUrl = URL.createObjectURL(blob);
+    // Créer un lien pour le téléchargement du fichier
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = this.name_file_txt;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    // Déclencher le téléchargement
+    a.click();
+    // Nettoyer après le téléchargement
+    URL.revokeObjectURL(blobUrl);
+    document.body.removeChild(a);
+  };
 
-  const list_polygons = (
-    <div>
-      <h4 style={{ margin: "0" }}>
-        Nombre de polygons séléctionnées : {features.length}
-      </h4>
-      <div className="outer-div">
-        {features.map((polygon, index) => (
-          <div key={index}>
-            <div className="liste_dalle">
-              <button
-                className="map-icon-button"
-                onClick={() =>
-                  remove_polygon_menu(
-                    polygon,
-                    drawnPolygonsLayer,
-                    vectorSourceDrawPolygon,
-                    dalles_select,
-                    vectorSourceGridDalle
-                  )
-                }
-              >
-                <FaTimes style={{ color: "red" }} />
-              </button>
-              <button
-                className="map-icon-button"
-                onClick={() => zoom_to_polygon(polygon, 12, mapInstance)}
-              >
-                <FaMapMarker />
-              </button>
+  handleGetDalle = (dalle) => {
+    console.log(dalle);
+    const dalle_polygon = dalle.geometry;
+    const dalleFeature = new Feature({
+      geometry: new Polygon(dalle_polygon.coordinates),
+    });
+    const regex = /LHD_FXX_(\d{4}_\d{4})/;
+    const name_dalle = dalle.properties.name.match(regex);
+    dalleFeature.setProperties({
+      properties: {
+        id: name_dalle[0],
+        url_download: dalle.properties.url,
+      },
+    });
+    // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
+    this.dalles_select.forEach((dalle_select) => {
+      if (dalle_select["values_"]["properties"]["id"] === name_dalle[0]) {
+        dalleFeature.setStyle(new Style(this.style_dalle.select));
+      }
+    });
+    // Ajoutez des polygons à la couche vecteur
+    this.vectorSourceGridDalle.addFeature(dalleFeature);
+  };
 
-              {MapState.polygon_select_list_dalle.polygon !== polygon ? (
-                <>
-                  <button
-                    className="map-icon-button"
-                    onClick={() => list_dalle_in_polygon(polygon, "open")}
-                  >
-                    <BsChevronLeft style={{ strokeWidth: "3px" }} />
-                  </button>
-                  <p>{polygon.values_.id}</p>
-                </>
-              ) : (
-                <>
-                  <button
-                    className="map-icon-button"
-                    onClick={() => list_dalle_in_polygon(polygon, "close")}
-                  >
-                    <BsChevronDown style={{ strokeWidth: "3px" }} />
-                  </button>
-                  <p>{polygon.values_.id}</p>
-                </>
-              )}
-            </div>
-
-            {MapState.polygon_select_list_dalle.polygon === polygon ? (
-              <div className="dalle-select-polygon">
-                {MapState.polygon_select_list_dalle.dalles.mapInstance(
-                  (dalle, key) => (
-                    <div className="liste_dalle" key={key}>
-                      <button
-                        className="map-icon-button"
-                        onClick={() =>
-                          remove_dalle_menu(
-                            dalle,
-                            dalles_select,
-                            vectorSourceGridDalle,
-                            list_dalle_in_polygon,
-                            null,
-                            (polygon = polygon)
-                          )
-                        }
-                      >
-                        <FaTimes style={{ color: "red" }} />
-                      </button>
-                      <button
-                        className="map-icon-button"
-                        onClick={() => zoom_to_polygon(dalle, 12, mapInstance)}
-                      >
-                        <FaMapMarker />
-                      </button>
-                      <a
-                        href={dalle.values_.properties.url_download}
-                        onMouseEnter={() =>
-                          pointer_move_dalle_menu(dalle.values_.properties.id)
-                        }
-                        onMouseLeave={() =>
-                          quit_pointer_move_dalle_menu(
-                            dalle.values_.properties.id
-                          )
-                        }
-                      >
-                        {dalle.values_.properties.id}
-                      </a>
-                    </div>
-                  )
-                )}
-              </div>
-            ) : null}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const items_collapse_liste_polygons = [
-    {
-      key: "1",
-      label: "Liste des polygons",
-      children: list_polygons,
-      extra: (
-        <DeleteOutlined
-          style={{ color: "red" }}
-          onClick={() =>
-            remove_all_polygons_menu(
-              event,
-              drawnPolygonsLayer,
-              filePolygonsLayer,
-              dalles_select,
-              vectorSourceGridDalle
-            )
-          }
-        />
-      ),
-    },
-  ];
-
-  useEffect(() => {
-    if (MapState) {
-      proj4.defs(
-        "EPSG:2154",
-        "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
-      );
-      register(proj4);
+  componentDidMount() {
+    // déclaration de la projection lamb93
+    proj4.defs(
+      "EPSG:2154",
+      "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
+    );
+    register(proj4);
 
       const expiresDate = new Date();
       expiresDate.setDate(expiresDate.getDate() + day_cookie_expiration);
@@ -734,60 +651,362 @@ export const App = (props) => {
         const maxX = extent[2];
         const maxY = extent[3];
 
-        axios
-          .get(
-            `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
-          )
-          .then((response) => {
-            response.data.features.forEach((dalle) => {
-              this.handleGetDalle(dalle);
-            });
+          axios
+            .get(
+              `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
+            )
+            .then((response) => {
+              response.data.features.forEach((dalle) => {
+                this.handleGetDalle(dalle);
+              });
 
-            // vérification nombre de dalles
+              // vérification nombre de dalles
 
-            if (response.data.totalFeatures > 5000) {
-              axios
-                .get(
-                  `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}&count=5000&startIndex=5000`
-                )
-                .then((response) => {
-                  response.data.features.forEach((dalle) => {
-                    this.handleGetDalle(dalle);
+              if (response.data.totalFeatures > 5000) {
+                
+                axios
+                  .get(
+                    `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}&count=5000&startIndex=5000`
+                  )
+                  .then((response) => {
+                    response.data.features.forEach((dalle) => {
+                      this.handleGetDalle(dalle);
+                    });
                   });
-                });
-            }
-          });
-      } else {
-        handle_mode_change({ target: { value: "click" } });
-        this.generate_multipolygon_bloc();
-      }
-    });
-  };
+              }
+            });
+        } else {
+          this.handleModeChange({ target: { value: "click" } });
+          this.generate_multipolygon_bloc();
+        }
+      });
+    };
 
-  return (
-    <MapContext.Provider
-      value={{
-        MapState,
-        zoom,
-        selectedMode,
-        setSelectedMode,
-        mapInstance,
-        dalleLayer,
-        style_dalle,
-      }}
-    >
-      <div className="map-container">
-        <div id="map"></div>
-        <div id="popup" className="ol-popup">
-          <div id="popup-content"></div>
+    Services.getConfig({
+      apiKey: "essentiels",
+      onSuccess: createMap,
+    });
+  }
+
+  render() {
+    const list_dalles = (
+      <div>
+        <div className="outer-div">
+          {this.state.dalles_select.map((item, index) => (
+            <div className="liste_dalle inner-div" key={index}>
+              <button
+                className="map-icon-button"
+                onClick={() => this.remove_dalle_menu(index, item)}
+              >
+                <FaTimes style={{ color: "red" }} />
+              </button>
+              <button
+                className="map-icon-button"
+                onClick={() => this.zoom_to_polygon(item, 12)}
+              >
+                <FaMapMarker />
+              </button>
+              <a
+                href={item.values_.properties.url_download}
+                onMouseEnter={() =>
+                  this.pointerMoveDalleMenu(item.values_.properties.id)
+                }
+                onMouseLeave={() =>
+                  this.quitPointerMoveDalleMenu(item.values_.properties.id)
+                }
+              >
+                {item.values_.properties.id}
+              </a>
+            </div>
+          ))}
         </div>
       </div>
-      <Menu
-        zoom_display_dalle={zoom_display_dalle}
-        limit_dalle_select={limit_dalle_select}
-      />
-    </MapContext.Provider>
-  );
-};
+    );
 
-export default withCookies(App);
+    const drawnPolygonsLayer = this.drawnPolygonsLayer;
+    const features = drawnPolygonsLayer.getSource().getFeatures();
+
+    const list_polygons = (
+      <div>
+        <h4 style={{ margin: "0" }}>
+          Nombre de sélections : {features.length}
+        </h4>
+        <div className="outer-div">
+          {features.map((polygon, index) => (
+            <div key={index}>
+              <div className="liste_dalle">
+                <button
+                  className="map-icon-button"
+                  onClick={() => this.remove_polygon_menu(polygon)}
+                >
+                  <FaTimes style={{ color: "red" }} />
+                </button>
+                <button
+                  className="map-icon-button"
+                  onClick={() => this.zoom_to_polygon(polygon, 12)}
+                >
+                  <FaMapMarker />
+                </button>
+
+                {this.state.polygon_select_list_dalle.polygon !== polygon ? (
+                  <>
+                    <button
+                      className="map-icon-button"
+                      onClick={() =>
+                        this.list_dalle_in_polygon(polygon, "open")
+                      }
+                    >
+                      <BsChevronLeft style={{ strokeWidth: "3px" }} />
+                    </button>
+                    <p>{polygon.values_.id}</p>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="map-icon-button"
+                      onClick={() =>
+                        this.list_dalle_in_polygon(polygon, "close")
+                      }
+                    >
+                      <BsChevronDown style={{ strokeWidth: "3px" }} />
+                    </button>
+                    <p>{polygon.values_.id}</p>
+                  </>
+                )}
+              </div>
+
+              {this.state.polygon_select_list_dalle.polygon === polygon ? (
+                <div className="dalle-select-polygon">
+                  {this.state.polygon_select_list_dalle.dalles.map(
+                    (dalle, key) => (
+                      <div className="liste_dalle" key={key}>
+                        <button
+                          className="map-icon-button"
+                          onClick={() =>
+                            this.remove_dalle_menu(null, dalle, polygon)
+                          }
+                        >
+                          <FaTimes style={{ color: "red" }} />
+                        </button>
+                        <button
+                          className="map-icon-button"
+                          onClick={() => this.zoom_to_polygon(dalle, 12)}
+                        >
+                          <FaMapMarker />
+                        </button>
+                        <a
+                          href={dalle.values_.properties.url_download}
+                          onMouseEnter={() =>
+                            this.pointerMoveDalleMenu(
+                              dalle.values_.properties.id
+                            )
+                          }
+                          onMouseLeave={() =>
+                            this.quitPointerMoveDalleMenu(
+                              dalle.values_.properties.id
+                            )
+                          }
+                        >
+                          {dalle.values_.properties.id}
+                        </a>
+                      </div>
+                    )
+                  )}
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const items_collapse_liste_polygons = [
+      {
+        key: "1",
+        label: "Liste des emprises",
+        children: list_polygons,
+        extra: (
+          <DeleteOutlined
+            style={{ color: "red" }}
+            onClick={this.remove_all_polygons_menu}
+          />
+        ),
+      },
+    ];
+
+    const items_collapse_liste_produit = [
+      {
+        key: "1",
+        label: "Liste des nuages de points classés",
+        children: list_dalles,
+        extra: (
+          <DeleteOutlined
+            style={{ color: "red" }}
+            onClick={this.remove_all_dalle_menu}
+          />
+        ),
+      },
+      // {
+      //     key: '2',
+      //     label: 'Liste des MNS',
+      //     children: <p>Donnée non disponible.</p>,
+      // },
+      // {
+      //     key: '3',
+      //     label: 'Liste des MNT',
+      //     children: <p>Donnée non disponible.</p>,
+      // },
+      // {
+      //     key: '4',
+      //     label: 'Autres',
+      //     children: <p>Donnée non disponible.</p>,
+      // },
+    ];
+
+    return (
+      <>
+        <div className="map-container">
+          <div id="map"></div>
+          <div id="popup" className="ol-popup">
+            <div id="popup-content"></div>
+          </div>
+        </div>
+
+        <div className="menu">
+          {this.state.zoom >= this.zoom_dispaly_dalle ? (
+            <div className="menu_mode">
+              <Card title="Choix du mode de sélection">
+                <Space
+                  direction="vertical"
+                  style={{ width: "100%" }}
+                  size="large"
+                >
+                  <Radio.Group
+                    onChange={this.handleModeChange}
+                    value={this.state.selectedMode}
+                  >
+                    <Radio value={"click"}>Clic</Radio>
+                    <Radio value={"polygon"}>Polygone</Radio>
+                    <Radio value={"rectangle"}>Rectangle</Radio>
+                  </Radio.Group>
+                  {/* <Upload
+                    maxCount={1}
+                    accept=".geojson"
+                    action={`${this.state.api_url}/api/upload/geojson`}
+                    onChange={this.handleUpload}
+                    onRemove={this.handleUploadRemove}
+                  >
+                    <Button icon={<UploadOutlined />}>
+                      Téléverser un GéoJSON (en lambert 93)
+                    </Button>
+                  </Upload> */}
+                </Space>
+              </Card>
+              <br />
+              <Collapse items={items_collapse_liste_polygons}></Collapse>
+              <br />
+            </div>
+          ) : null}
+
+          <div className="dalle-select">
+            {this.state.dalles_select.length === 0 ? (
+              <h3 className="center">Aucune donnée sélectionnée.</h3>
+            ) : (
+              <React.Fragment>
+                {this.state.dalles_select.length >= this.limit_dalle_select ? (
+                  <h5 className="text_red">
+                    Nombre de dalles sélectionnées :{" "}
+                    {this.state.dalles_select.length}/{this.limit_dalle_select}
+                  </h5>
+                ) : (
+                  <h5>
+                    Nombre de dalles sélectionnées :{" "}
+                    {this.state.dalles_select.length}/{this.limit_dalle_select}
+                  </h5>
+                )}
+                <Collapse items={items_collapse_liste_produit}></Collapse>
+              </React.Fragment>
+            )}
+          </div>
+
+          {this.state.dalles_select.length > 0 ? (
+            <div className="center">
+              <Space>
+                <Button
+                  onClick={this.handleTelechargement}
+                  type="default"
+                  icon={<DownloadOutlined />}
+                  size="large"
+                >
+                  Télécharger la liste des liens
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={this.showModal}
+                  icon={<QuestionCircleOutlined />}
+                ></Button>
+                <Modal
+                  title="Comment télécharger les données ?"
+                  open={this.state.isModalOpen}
+                  onOk={this.handleOk}
+                  onCancel={this.handleCancel}
+                  width={650}
+                  cancelButtonProps={{ style: { display: "none" } }}
+                >
+                  <div>
+                    <ul>
+                      <li>
+                        Cette interface vous permet de récupérer la liste des
+                        données vous intéressent.
+                      </li>
+                      <li>
+                        Pour récupérer les données facilement, il faudra
+                        automatiser le téléchargement.
+                      </li>
+                      <li>
+                        Pour cela, vous pouvez utiliser les applicatifs suivants
+                        (par exemple) :
+                      </li>
+                      <ul>
+                        <li>
+                          <a href="https://www.downthemall.net/">
+                            DownThemAll!
+                          </a>
+                        </li>
+                        <li>
+                          <a href="https://xtremedownloadmanager.com/">
+                            Xtreme Download Manager
+                          </a>
+                        </li>
+                      </ul>
+                    </ul>
+                    Pour plus d'explications la vidéo suivante vous indique la
+                    marche à suivre :
+                    <iframe
+                      width="560"
+                      height="315"
+                      src="https://www.youtube.com/embed/-YomQJC6S38?si=ycCCdLbQ4KmMNSqn&amp;start=59"
+                      title="YouTube video player"
+                      frameborder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowfullscreen
+                    ></iframe>
+                  </div>
+                </Modal>
+              </Space>
+            </div>
+          ) : null}
+        </div>
+
+        {this.state.coor_mouse !== null ? (
+          <Card bodyStyle={{ padding: "2px" }} className="coor">
+            Coordonnées (lambert 93) :{Math.round(this.state.coor_mouse[0])} -{" "}
+            {Math.round(this.state.coor_mouse[1])}
+          </Card>
+        ) : null}
+      </>
+    );
+  }
+}
+
+export default App;
