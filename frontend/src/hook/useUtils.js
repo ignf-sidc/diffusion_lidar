@@ -1,5 +1,14 @@
 import { FaTimes, FaMapMarker } from "react-icons/fa";
+import axios from "axios";
 import { zoom_to_polygon } from "./useZoom";
+import Feature from "ol/Feature";
+import { Polygon, MultiPolygon } from "ol/geom";
+import { handle_get_dalle } from "./useHandle";
+
+axios.defaults.headers = {
+  "Cache-Control": "no-cache",
+};
+
 function style_dalle_select(feature, MapState) {
   // fonction permettant d'ajuster le style au survol d'une dalle
   // on parcout la liste des dalles selectionner
@@ -215,26 +224,54 @@ function click_select(
   return true;
 }
 
-function generate_multipolygon_bloc(drawnBlocsLayer, vectorSourceBloc) {
+// TODO: A refacto pour personaliser l'url d'entré.
+function get_bloc(drawnBlocsLayer, vectorSourceBloc) {
   axios
     .get(
       `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:bloc&outputFormat=application/json`
     )
     .then((response) => {
-
-        // on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
+      // etant donner qu'on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
       drawnBlocsLayer.getSource().clear();
-      response.data.result.features.forEach((bloc) => {
+      // on parcours notre liste de blocs
+      response.data.features.forEach((bloc) => {
+        // on trace nos bblocs
         const multiPolygonFeature = new Feature({
           geometry: new MultiPolygon(bloc.geometry.coordinates),
         });
         multiPolygonFeature.setProperties({
-          id: bloc.properties.Nom_bloc,
-          superficie: bloc.properties.Superficie,
+          id: bloc.properties.name,
+          superficie: bloc.properties.area,
         });
         vectorSourceBloc.addFeature(multiPolygonFeature);
       });
     });
+}
+
+async function get_dalles(
+  url,
+  dalles_select,
+  vectorSourceGridDalle,
+  style_dalle
+) {
+  console.log(hello);
+  const [firstResponse, secondResponse] = await Promise.all([
+    axios.get(url),
+    axios.get(url.concat("&count=5000&startIndex=5000")),
+  ]);
+  firstResponse.data.features.forEach((dalle) => {
+    handle_get_dalle(dalle, dalles_select, vectorSourceGridDalle, style_dalle);
+
+  });
+  // vérification nombre de dalles
+  secondResponse.data.features.forEach((dalle) => {
+    handle_get_dalle(
+      dalle,
+      dalles_select,
+      vectorSourceGridDalle,
+      style_dalle
+    );
+  });
 }
 
 function list_dalles(
@@ -301,7 +338,8 @@ export {
   get_dalle_in_polygon,
   draw_emprise,
   dalle_select_max_alert,
-  generate_multipolygon_bloc,
+  get_bloc,
+  get_dalles,
   list_dalles,
   click_select,
 };

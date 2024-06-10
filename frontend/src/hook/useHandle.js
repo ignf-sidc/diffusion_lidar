@@ -1,21 +1,25 @@
-function handle_mode_change(mode, mapInstance, selectedMode, selectInteractionClick, drawPolygon, drawRectangle) {
+
+import Feature from "ol/Feature";
+import { Polygon} from "ol/geom";
+
+import React from "react";
+
+function handle_mode_change( ref,selectedMode, selectInteractionClick, drawPolygon, drawRectangle) {
     // Cette fonction permet de changer de mode de selection et d'ajouter et supprimer les différentes interactions
-    var map = mapInstance;
     if (selectedMode == "polygon") {
-      map.removeInteraction(selectInteractionClick);
-      map.addInteraction(drawPolygon);
-      map.removeInteraction(drawRectangle);
+      ref.removeInteraction(selectInteractionClick);
+      ref.addInteraction(drawPolygon);
+      ref.removeInteraction(drawRectangle);
     } else if (selectedMode == "rectangle") {
-      map.removeInteraction(selectInteractionClick);
-      map.removeInteraction(drawPolygon);
-      map.addInteraction(drawRectangle);
+      ref.removeInteraction(selectInteractionClick);
+      ref.removeInteraction(drawPolygon);
+      ref.addInteraction(drawRectangle);
     } else if (selectedMode == "click") {
-      map.addInteraction(selectInteractionClick);
-      map.removeInteraction(drawPolygon);
-      map.removeInteraction(drawRectangle);
+      ref.addInteraction(selectInteractionClick);
+      ref.removeInteraction(drawPolygon);
+      ref.removeInteraction(drawRectangle);
     }
 
-  return mode.target.value 
 }
 
 function handle_upload(info) {
@@ -138,7 +142,9 @@ function handle_telechargement() {
   document.body.removeChild(a);
 }
 
-function handle_get_dalle() {
+
+
+function handle_get_dalle (dalle, dalles_select, vectorSourceGridDalle, style_dalle) {
   const dalle_polygon = dalle.geometry;
   const dalleFeature = new Feature({
     geometry: new Polygon(dalle_polygon.coordinates),
@@ -152,16 +158,16 @@ function handle_get_dalle() {
     },
   });
   // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
-  this.dalles_select.forEach((dalle_select) => {
+  dalles_select.forEach((dalle_select) => {
     if (dalle_select["values_"]["properties"]["id"] === name_dalle[0]) {
-      dalleFeature.setStyle(new Style(this.style_dalle.select));
+      dalleFeature.setStyle(new Style(style_dalle.select));
     }
   });
   // Ajoutez des polygons à la couche vecteur
-  this.vectorSourceGridDalle.addFeature(dalleFeature);
+  vectorSourceGridDalle.addFeature(dalleFeature);
 };
 
-export {
+export  { 
   handle_mode_change,
   handle_upload,
   handle_upload_remove,

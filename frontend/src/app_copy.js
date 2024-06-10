@@ -39,6 +39,10 @@ import { Typography } from "antd";
 
 const { Title } = Typography;
 
+axios.defaults.headers = {
+  'Cache-Control': 'no-cache',
+};
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -126,6 +130,9 @@ class App extends Component {
   };
 
   handleOk = () => {
+    this.setState({ isModalOpen: false });
+  };
+  handleCancel = () => {
     this.setState({ isModalOpen: false });
   };
 
@@ -540,22 +547,26 @@ class App extends Component {
   generate_multipolygon_bloc = () => {
     // fonction qui genere les blocs et qui est appellé à chaque fois qu'on bouge la carte, à un certain niveau de zoom
     // on fais appelle à l'api pour recuperer les blocs
-    axios.get(`${this.state.api_url}/api/data/get/blocs`).then((response) => {
-      // etant donner qu'on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
-      this.drawnBlocsLayer.getSource().clear();
-      // on parcours notre liste de blocs
-      response.data.result.features.forEach((bloc) => {
-        // on trace nos bblocs
-        const multiPolygonFeature = new Feature({
-          geometry: new MultiPolygon(bloc.geometry.coordinates),
+    axios
+      .get(
+        `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:bloc&outputFormat=application/json`
+      )
+      .then((response) => {
+        // etant donner qu'on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
+        this.drawnBlocsLayer.getSource().clear();
+        // on parcours notre liste de blocs
+        response.data.features.forEach((bloc) => {
+          // on trace nos bblocs
+          const multiPolygonFeature = new Feature({
+            geometry: new MultiPolygon(bloc.geometry.coordinates),
+          });
+          multiPolygonFeature.setProperties({
+            id: bloc.properties.name,
+            superficie: bloc.properties.area,
+          });
+          this.vectorSourceBloc.addFeature(multiPolygonFeature);
         });
-        multiPolygonFeature.setProperties({
-          id: bloc.properties.Nom_bloc,
-          superficie: bloc.properties.Superficie,
-        });
-        this.vectorSourceBloc.addFeature(multiPolygonFeature);
       });
-    });
   };
 
   handleTelechargement = () => {
@@ -581,6 +592,30 @@ class App extends Component {
     // Nettoyer après le téléchargement
     URL.revokeObjectURL(blobUrl);
     document.body.removeChild(a);
+  };
+
+  handleGetDalle = (dalle) => {
+    console.log(dalle);
+    const dalle_polygon = dalle.geometry;
+    const dalleFeature = new Feature({
+      geometry: new Polygon(dalle_polygon.coordinates),
+    });
+    const regex = /LHD_FXX_(\d{4}_\d{4})/;
+    const name_dalle = dalle.properties.name.match(regex);
+    dalleFeature.setProperties({
+      properties: {
+        id: name_dalle[0],
+        url_download: dalle.properties.url,
+      },
+    });
+    // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
+    this.dalles_select.forEach((dalle_select) => {
+      if (dalle_select["values_"]["properties"]["id"] === name_dalle[0]) {
+        dalleFeature.setStyle(new Style(this.style_dalle.select));
+      }
+    });
+    // Ajoutez des polygons à la couche vecteur
+    this.vectorSourceGridDalle.addFeature(dalleFeature);
   };
 
   componentDidMount() {
@@ -836,34 +871,27 @@ class App extends Component {
 
           axios
             .get(
-              `${this.state.api_url}/api/data/get/dalles/${minX}/${minY}/${maxX}/${maxY}`
+              `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
             )
             .then((response) => {
-              response.data.result.forEach((dalle) => {
-                const dalle_polygon = JSON.parse(dalle.polygon);
-                const dalleFeature = new Feature({
-                  geometry: new Polygon(dalle_polygon.coordinates),
-                });
-                const regex = /LHD_FXX_(\d{4}_\d{4})/;
-                const name_dalle = dalle.name.match(regex);
-                dalleFeature.setProperties({
-                  properties: {
-                    id: name_dalle[0],
-                    url_download: dalle.name,
-                  },
-                });
-                // quand on bouge la carte on met le style de dalle selectionner si c'est le cas
-                this.dalles_select.forEach((dalle_select) => {
-                  if (
-                    dalle_select["values_"]["properties"]["id"] ===
-                    name_dalle[0]
-                  ) {
-                    dalleFeature.setStyle(new Style(this.style_dalle.select));
-                  }
-                });
-                // Ajoutez des polygons à la couche vecteur
-                this.vectorSourceGridDalle.addFeature(dalleFeature);
+              response.data.features.forEach((dalle) => {
+                this.handleGetDalle(dalle);
               });
+
+              // vérification nombre de dalles
+
+              if (response.data.totalFeatures > 5000) {
+                
+                axios
+                  .get(
+                    `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}&count=5000&startIndex=5000`
+                  )
+                  .then((response) => {
+                    response.data.features.forEach((dalle) => {
+                      this.handleGetDalle(dalle);
+                    });
+                  });
+              }
             });
         } else {
           this.handleModeChange({ target: { value: "click" } });
@@ -1054,7 +1082,7 @@ class App extends Component {
     ];
 
     return (
-      <div>
+      <>
         <div className="map-container">
           <div id="map"></div>
           <div id="popup" className="ol-popup">
@@ -1136,14 +1164,14 @@ class App extends Component {
                   icon={<QuestionCircleOutlined />}
                 ></Button>
                 <Modal
-                  title="Info téléchargement"
+                  title="Comment télécharger les données ?"
                   open={this.state.isModalOpen}
                   onOk={this.handleOk}
+                  onCancel={this.handleCancel}
                   width={650}
                   cancelButtonProps={{ style: { display: "none" } }}
                 >
                   <div>
-                    Comment télécharger les données ?
                     <ul>
                       <li>
                         Cette interface vous permet de récupérer la liste des
@@ -1159,19 +1187,19 @@ class App extends Component {
                       </li>
                       <ul>
                         <li>
-                          <a href="https://xtremedownloadmanager.com/">
-                            Xtreme Download Manager
-                          </a>
-                        </li>
-                        <li>
                           <a href="https://www.downthemall.net/">
                             DownThemAll!
                           </a>
                         </li>
+                        <li>
+                          <a href="https://xtremedownloadmanager.com/">
+                            Xtreme Download Manager
+                          </a>
+                        </li>
                       </ul>
                     </ul>
-                    Pour plus d'explication n'hésitez pas à regerde cette courte
-                    vidéo:
+                    Pour plus d'explications la vidéo suivante vous indique la
+                    marche à suivre :
                     <iframe
                       width="560"
                       height="315"
@@ -1186,22 +1214,15 @@ class App extends Component {
               </Space>
             </div>
           ) : null}
-          {this.state.coor_mouse !== null ? (
-            <div>
-              <Card>
-                <p
-                  style={{ margin: "0", fontSize: "16px", fontWeight: "bold" }}
-                  className="menu_mode center"
-                >
-                  Coordonnées (lambert 93) :{" "}
-                  {Math.round(this.state.coor_mouse[0])} -{" "}
-                  {Math.round(this.state.coor_mouse[1])}
-                </p>
-              </Card>
-            </div>
-          ) : null}
         </div>
-      </div>
+
+        {this.state.coor_mouse !== null ? (
+          <Card bodyStyle={{ padding: "2px" }} className="coor">
+            Coordonnées (lambert 93) :{Math.round(this.state.coor_mouse[0])} -{" "}
+            {Math.round(this.state.coor_mouse[1])}
+          </Card>
+        ) : null}
+      </>
     );
   }
 }
