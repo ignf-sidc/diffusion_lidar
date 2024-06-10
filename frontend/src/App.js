@@ -852,7 +852,7 @@ class App extends Component {
       map.addOverlay(overlay);
 
       // Lorsque qu'on se déplace sur la carte
-      map.on("moveend", () => {
+      map.on("moveend", async () => {
         var view = map.getView();
         this.setState({ zoom: view.getZoom() });
         // recupere la bbox de la fenetre de son pc
@@ -869,30 +869,25 @@ class App extends Component {
           var maxX = extent[2];
           var maxY = extent[3];
 
-          axios
-            .get(
-              `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
-            )
-            .then((response) => {
-              response.data.features.forEach((dalle) => {
-                this.handleGetDalle(dalle);
-              });
-
-              // vérification nombre de dalles
-
-              if (response.data.totalFeatures > 5000) {
-                
-                axios
-                  .get(
-                    `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}&count=5000&startIndex=5000`
-                  )
-                  .then((response) => {
-                    response.data.features.forEach((dalle) => {
-                      this.handleGetDalle(dalle);
-                    });
-                  });
-              }
+          
+            const [firstResponse, secondResponse] = await Promise.all([
+              axios.get(`https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
+            ),
+              axios.get(`https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
+            .concat("&count=5000&startIndex=5000")),
+            ]);
+            firstResponse.data.features.forEach((dalle) => {
+              this.handleGetDalle(dalle);
+           
             });
+            if (secondResponse) {
+              secondResponse.data.features.forEach((dalle) => {
+                this.handleGetDalle(dalle);
+             
+              })
+              
+            }
+
         } else {
           this.handleModeChange({ target: { value: "click" } });
           this.generate_multipolygon_bloc();
