@@ -931,12 +931,12 @@ class App extends Component {
                 {item.values_.properties.id}
               </a>
 
-              <button
+              <a
                 className="map-icon-button"
-                onClick={() => this.visualisation()}
+                href={`${this.state.api_url}/visonneuse?=`.concat(item.values_.properties.url_download)}
               >
                 <FaEye />
-              </button>
+              </a>
             </div>
           ))}
         </div>
