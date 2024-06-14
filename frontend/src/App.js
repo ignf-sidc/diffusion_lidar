@@ -933,7 +933,7 @@ class App extends Component {
 
               <a
                 className="map-icon-button"
-                href={`${this.state.api_url}/visonneuse?copc=`.concat(item.values_.properties.url_download)}
+                href={`${this.state.api_url}/visionneuse?copc=`.concat(item.values_.properties.url_download)}
               >
                 <FaEye />
               </a>
