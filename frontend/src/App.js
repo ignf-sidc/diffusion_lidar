@@ -11,7 +11,7 @@ import { createBox, createRegularPolygon } from "ol/interaction/Draw.js";
 import { Logger, Services, olExtended } from "geoportal-extensions-openlayers";
 import "../node_modules/geoportal-extensions-openlayers/dist/GpPluginOpenLayers.css";
 import "../node_modules/ol/ol.css";
-import { FaTimes, FaMapMarker } from "react-icons/fa";
+import { FaTimes, FaMapMarker, FaEye } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import { BsChevronDown, BsChevronLeft } from "react-icons/bs";
 import {
@@ -40,7 +40,7 @@ import { Typography } from "antd";
 const { Title } = Typography;
 
 axios.defaults.headers = {
-  'Cache-Control': 'no-cache',
+  "Cache-Control": "no-cache",
 };
 
 class App extends Component {
@@ -595,7 +595,6 @@ class App extends Component {
   };
 
   handleGetDalle = (dalle) => {
-    console.log(dalle);
     const dalle_polygon = dalle.geometry;
     const dalleFeature = new Feature({
       geometry: new Polygon(dalle_polygon.coordinates),
@@ -869,25 +868,25 @@ class App extends Component {
           var maxX = extent[2];
           var maxY = extent[3];
 
-          
-            const [firstResponse, secondResponse] = await Promise.all([
-              axios.get(`https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
+          const [firstResponse, secondResponse] = await Promise.all([
+            axios.get(
+              `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
             ),
-              axios.get(`https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
-            .concat("&count=5000&startIndex=5000")),
-            ]);
-            firstResponse.data.features.forEach((dalle) => {
-              this.handleGetDalle(dalle);
-           
-            });
-            if (secondResponse) {
-              secondResponse.data.features.forEach((dalle) => {
-                this.handleGetDalle(dalle);
-             
-              })
-              
-            }
+            axios.get(
+              `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`.concat(
+                "&count=5000&startIndex=5000"
+              )
+            ),
+          ]);
 
+          firstResponse.data.features.forEach((dalle) => {
+            this.handleGetDalle(dalle);
+          });
+          if (secondResponse) {
+            secondResponse.data.features.forEach((dalle) => {
+              this.handleGetDalle(dalle);
+            });
+          }
         } else {
           this.handleModeChange({ target: { value: "click" } });
           this.generate_multipolygon_bloc();
@@ -919,6 +918,7 @@ class App extends Component {
               >
                 <FaMapMarker />
               </button>
+
               <a
                 href={item.values_.properties.url_download}
                 onMouseEnter={() =>
@@ -930,6 +930,13 @@ class App extends Component {
               >
                 {item.values_.properties.id}
               </a>
+
+              <button
+                className="map-icon-button"
+                onClick={() => this.visualisation()}
+              >
+                <FaEye />
+              </button>
             </div>
           ))}
         </div>
