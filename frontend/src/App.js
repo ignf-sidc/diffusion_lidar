@@ -905,7 +905,10 @@ class App extends Component {
       <div>
         <div className="outer-div">
           {this.state.dalles_select.map((item, index) => (
+
+        
             <div className="liste_dalle inner-div" key={index}>
+              <Space>
               <button
                 className="map-icon-button"
                 onClick={() => this.remove_dalle_menu(index, item)}
@@ -934,10 +937,14 @@ class App extends Component {
               <a
                 className="map-icon-button"
                 href={`${this.state.api_url}/visionneuse?copc=`.concat(item.values_.properties.url_download)}
+                target="_blank"
               >
                 <FaEye />
               </a>
+              </Space>
             </div>
+
+        
           ))}
         </div>
       </div>
