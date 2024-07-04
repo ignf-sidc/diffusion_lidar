@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, Map, Overlay } from "ol";
+import ol,{ View, Map, Overlay } from "ol";
 import axios from "axios";
 import Feature from "ol/Feature";
 import { Polygon, MultiPolygon } from "ol/geom";
@@ -34,6 +34,7 @@ import {
 import { get as getProjection } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import proj4 from "proj4";
+import { click, platformModifierKeyOnly } from "ol/events/condition";
 
 import { Typography } from "antd";
 
@@ -692,7 +693,7 @@ class App extends Component {
         layers: [this.vectorLayer],
       });
 
-      // évenement au survol d'une salle
+      // évenement au survol d'une dalle
       selectInteraction.on("select", (event) => {
         if (event.selected.length > 0) {
           var selectedFeature = event.selected[0];
@@ -713,9 +714,29 @@ class App extends Component {
         this.old_dalles_select = selectedFeature;
       });
 
+      this.visionneuseInteraction = new Select({
+        condition: function (event) {
+          return platformModifierKeyOnly(event) && click(event);
+        },
+        layers: [this.vectorLayer]
+      })
+
+      this.visionneuseInteraction.on("select", (event) =>{
+
+        event.preventDefault()
+          const featureSelect = event.selected[0]
+          const a = document.createElement("a")
+          a.href =`${this.state.api_url}/visionneuse?copc=`.concat(event.selected[0].values_.properties.url_download)
+          a.setAttribute("target","_blank")
+          a.click()
+
+          
+      })
+      map.addInteraction(this.visionneuseInteraction)
+
       this.selectInteractionClick = new Select({
         condition: function (event) {
-          return event.type === "click";
+          return click(event) && !platformModifierKeyOnly(event)
         },
         layers: [this.vectorLayer],
       });
@@ -905,46 +926,44 @@ class App extends Component {
       <div>
         <div className="outer-div">
           {this.state.dalles_select.map((item, index) => (
-
-        
             <div className="liste_dalle inner-div" key={index}>
               <Space>
-              <button
-                className="map-icon-button"
-                onClick={() => this.remove_dalle_menu(index, item)}
-              >
-                <FaTimes style={{ color: "red" }} />
-              </button>
-              <button
-                className="map-icon-button"
-                onClick={() => this.zoom_to_polygon(item, 12)}
-              >
-                <FaMapMarker />
-              </button>
+                <button
+                  className="map-icon-button"
+                  onClick={() => this.remove_dalle_menu(index, item)}
+                >
+                  <FaTimes style={{ color: "red" }} />
+                </button>
+                <button
+                  className="map-icon-button"
+                  onClick={() => this.zoom_to_polygon(item, 12)}
+                >
+                  <FaMapMarker />
+                </button>
 
-              <a
-                href={item.values_.properties.url_download}
-                onMouseEnter={() =>
-                  this.pointerMoveDalleMenu(item.values_.properties.id)
-                }
-                onMouseLeave={() =>
-                  this.quitPointerMoveDalleMenu(item.values_.properties.id)
-                }
-              >
-                {item.values_.properties.id}
-              </a>
+                <a
+                  href={item.values_.properties.url_download}
+                  onMouseEnter={() =>
+                    this.pointerMoveDalleMenu(item.values_.properties.id)
+                  }
+                  onMouseLeave={() =>
+                    this.quitPointerMoveDalleMenu(item.values_.properties.id)
+                  }
+                >
+                  {item.values_.properties.id}
+                </a>
 
-              <a
-                className="map-icon-button"
-                href={`${this.state.api_url}/visionneuse?copc=`.concat(item.values_.properties.url_download)}
-                target="_blank"
-              >
-                <FaEye />
-              </a>
+                <a
+                  className="map-icon-button"
+                  href={`${this.state.api_url}/visionneuse?copc=`.concat(
+                    item.values_.properties.url_download
+                  )}
+                  target="_blank"
+                >
+                  <FaEye />
+                </a>
               </Space>
             </div>
-
-        
           ))}
         </div>
       </div>
@@ -1100,23 +1119,30 @@ class App extends Component {
         </div>
 
         <div className="menu">
-          {this.state.zoom >= this.zoom_dispaly_dalle ? (
-            <div className="menu_mode">
-              <Card title="Choix du mode de sélection">
-                <Space
-                  direction="vertical"
-                  style={{ width: "100%" }}
-                  size="large"
-                >
-                  <Radio.Group
-                    onChange={this.handleModeChange}
-                    value={this.state.selectedMode}
+          <div className="dalle-select">
+            <Space>
+              <Button href="/" disabled="true">
+                Nuage de point
+              </Button>
+              <Button href="/MNX/">Produit dérivé</Button>
+            </Space>
+            {this.state.zoom >= this.zoom_dispaly_dalle ? (
+              <div className="menu_mode">
+                <Card title="Choix du mode de sélection">
+                  <Space
+                    direction="vertical"
+                    style={{ width: "100%" }}
+                    size="large"
                   >
-                    <Radio value={"click"}>Clic</Radio>
-                    <Radio value={"polygon"}>Polygone</Radio>
-                    <Radio value={"rectangle"}>Rectangle</Radio>
-                  </Radio.Group>
-                  {/* <Upload
+                    <Radio.Group
+                      onChange={this.handleModeChange}
+                      value={this.state.selectedMode}
+                    >
+                      <Radio value={"click"}>Clic</Radio>
+                      <Radio value={"polygon"}>Polygone</Radio>
+                      <Radio value={"rectangle"}>Rectangle</Radio>
+                    </Radio.Group>
+                    {/* <Upload
                     maxCount={1}
                     accept=".geojson"
                     action={`${this.state.api_url}/api/upload/geojson`}
@@ -1127,15 +1153,14 @@ class App extends Component {
                       Téléverser un GéoJSON (en lambert 93)
                     </Button>
                   </Upload> */}
-                </Space>
-              </Card>
-              <br />
-              <Collapse items={items_collapse_liste_polygons}></Collapse>
-              <br />
-            </div>
-          ) : null}
+                  </Space>
+                </Card>
+                <br />
+                <Collapse items={items_collapse_liste_polygons}></Collapse>
+                <br />
+              </div>
+            ) : null}
 
-          <div className="dalle-select">
             {this.state.dalles_select.length === 0 ? (
               <h3 className="center">Aucune donnée sélectionnée.</h3>
             ) : (
