@@ -1134,7 +1134,7 @@ class App extends Component {
               <Card
                 title="Choix du mode de sélection"
                 extra={
-                  <Tooltip title="En mode clic, pour visualiser une dalle faites ctrl+clic sur la dalle">
+                  <Tooltip title="En mode clic, pour visualiser une dalle faites CTRL+clic gauche sur la dalle">
                     <QuestionCircleOutlined />
                   </Tooltip>
                 }
