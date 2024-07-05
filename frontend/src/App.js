@@ -1134,7 +1134,7 @@ class App extends Component {
               <Card
                 title="Choix du mode de sélection"
                 extra={
-                  <Tooltip title="En mode clic, pour visualiser une dalle faites CTRL+clic gauche sur la dalle">
+                  <Tooltip title="En mode clic, 'CTRL + clic gauche' sur une dalle permet de visionner le nuage de points directement dans votre navigateur. ">
                     <QuestionCircleOutlined />
                   </Tooltip>
                 }
