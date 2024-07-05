@@ -1131,7 +1131,14 @@ class App extends Component {
           </div>
           {this.state.zoom >= this.zoom_dispaly_dalle ? (
             <div className="menu_mode">
-              <Card title="Choix du mode de sélection">
+              <Card
+                title="Choix du mode de sélection"
+                extra={
+                  <Tooltip title="En mode clic, pour visualiser une dalle faites ctrl+clic sur la dalle">
+                    <QuestionCircleOutlined />
+                  </Tooltip>
+                }
+              >
                 <Space
                   direction="vertical"
                   style={{ width: "100%" }}
