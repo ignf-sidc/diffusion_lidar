@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, Map, Overlay } from "ol";
+import ol, { View, Map, Overlay } from "ol";
 import axios from "axios";
 import Feature from "ol/Feature";
 import { Polygon, MultiPolygon } from "ol/geom";
@@ -24,6 +24,7 @@ import {
   Collapse,
   Popover,
   Modal,
+  Tooltip,
 } from "antd";
 import {
   UploadOutlined,
@@ -34,6 +35,7 @@ import {
 import { get as getProjection } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import proj4 from "proj4";
+import { click, platformModifierKeyOnly } from "ol/events/condition";
 
 import { Typography } from "antd";
 
@@ -692,7 +694,7 @@ class App extends Component {
         layers: [this.vectorLayer],
       });
 
-      // évenement au survol d'une salle
+      // évenement au survol d'une dalle
       selectInteraction.on("select", (event) => {
         if (event.selected.length > 0) {
           var selectedFeature = event.selected[0];
@@ -713,9 +715,28 @@ class App extends Component {
         this.old_dalles_select = selectedFeature;
       });
 
+      this.visionneuseInteraction = new Select({
+        condition: function (event) {
+          return platformModifierKeyOnly(event) && click(event);
+        },
+        layers: [this.vectorLayer],
+      });
+
+      this.visionneuseInteraction.on("select", (event) => {
+        event.preventDefault();
+        const featureSelect = event.selected[0];
+        const a = document.createElement("a");
+        a.href = `${this.state.api_url}/visionneuse?copc=`.concat(
+          event.selected[0].values_.properties.url_download
+        );
+        a.setAttribute("target", "_blank");
+        a.click();
+      });
+      map.addInteraction(this.visionneuseInteraction);
+
       this.selectInteractionClick = new Select({
         condition: function (event) {
-          return event.type === "click";
+          return click(event) && !platformModifierKeyOnly(event);
         },
         layers: [this.vectorLayer],
       });
@@ -905,46 +926,44 @@ class App extends Component {
       <div>
         <div className="outer-div">
           {this.state.dalles_select.map((item, index) => (
-
-        
             <div className="liste_dalle inner-div" key={index}>
               <Space>
-              <button
-                className="map-icon-button"
-                onClick={() => this.remove_dalle_menu(index, item)}
-              >
-                <FaTimes style={{ color: "red" }} />
-              </button>
-              <button
-                className="map-icon-button"
-                onClick={() => this.zoom_to_polygon(item, 12)}
-              >
-                <FaMapMarker />
-              </button>
+                <button
+                  className="map-icon-button"
+                  onClick={() => this.remove_dalle_menu(index, item)}
+                >
+                  <FaTimes style={{ color: "red" }} />
+                </button>
+                <button
+                  className="map-icon-button"
+                  onClick={() => this.zoom_to_polygon(item, 12)}
+                >
+                  <FaMapMarker />
+                </button>
 
-              <a
-                href={item.values_.properties.url_download}
-                onMouseEnter={() =>
-                  this.pointerMoveDalleMenu(item.values_.properties.id)
-                }
-                onMouseLeave={() =>
-                  this.quitPointerMoveDalleMenu(item.values_.properties.id)
-                }
-              >
-                {item.values_.properties.id}
-              </a>
+                <a
+                  href={item.values_.properties.url_download}
+                  onMouseEnter={() =>
+                    this.pointerMoveDalleMenu(item.values_.properties.id)
+                  }
+                  onMouseLeave={() =>
+                    this.quitPointerMoveDalleMenu(item.values_.properties.id)
+                  }
+                >
+                  {item.values_.properties.id}
+                </a>
 
-              <a
-                className="map-icon-button"
-                href={`${this.state.api_url}/visionneuse?copc=`.concat(item.values_.properties.url_download)}
-                target="_blank"
-              >
-                <FaEye />
-              </a>
+                <a
+                  className="map-icon-button"
+                  href={`${this.state.api_url}/visionneuse?copc=`.concat(
+                    item.values_.properties.url_download
+                  )}
+                  target="_blank"
+                >
+                  <FaEye />
+                </a>
               </Space>
             </div>
-
-        
           ))}
         </div>
       </div>
@@ -1100,9 +1119,26 @@ class App extends Component {
         </div>
 
         <div className="menu">
+          <div className="menu-interface">
+            <Space>
+              <Button href="/" disabled="true">
+                Nuages de points
+              </Button>
+              <Tooltip title="Accéder à la page de téléchargement des produits dérivés LiDAR HD">
+                <Button href="/mnx/">Produits dérivés</Button>
+              </Tooltip>
+            </Space>
+          </div>
           {this.state.zoom >= this.zoom_dispaly_dalle ? (
             <div className="menu_mode">
-              <Card title="Choix du mode de sélection">
+              <Card
+                title="Choix du mode de sélection"
+                extra={
+                  <Tooltip title="En mode clic, 'CTRL + clic gauche' sur une dalle permet de visionner le nuage de points directement dans votre navigateur. ">
+                    <QuestionCircleOutlined />
+                  </Tooltip>
+                }
+              >
                 <Space
                   direction="vertical"
                   style={{ width: "100%" }}

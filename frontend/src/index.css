@@ -47,6 +47,11 @@ code {
   overflow: scroll;
 }
 
+.menu-interface {
+  margin-top: 20px;
+  text-align: center;
+}
+
 .coor {
   position: absolute;
   left: 0;
