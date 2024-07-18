@@ -662,11 +662,6 @@ class App extends Component {
       var search = new olExtended.control.SearchEngine({ zoomTo: 12 });
       map.addControl(search);
 
-      var layerSwitcher = new olExtended.control.LayerSwitcher({
-        reverse: true,
-        groupSelectStyle: "group",
-      });
-      map.addControl(layerSwitcher);
 
       // code qui permet de supprimer les couches du gestionnaire de couche
       // on recupere les layers dans la couche du ggestionnaire
