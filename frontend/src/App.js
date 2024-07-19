@@ -1215,7 +1215,7 @@ class App extends Component {
                     <ul>
                       <li>
                         Cette interface vous permet de récupérer la liste des
-                        données vous intéressent.
+                        données qui vous intéressent.
                       </li>
                       <li>
                         Pour récupérer les données facilement, il faudra
