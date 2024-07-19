@@ -551,7 +551,7 @@ class App extends Component {
     // on fais appelle à l'api pour recuperer les blocs
     axios
       .get(
-        `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:bloc&outputFormat=application/json`
+        `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=IGNF_LIDAR-HD_TA:nuage-bloc&outputFormat=application/json`
       )
       .then((response) => {
         // etant donner qu'on ne trace que les blocs dans la fenetre, à chaque fois qu'on bouge sur la carte, on remet de notre couche vierge
@@ -662,11 +662,6 @@ class App extends Component {
       var search = new olExtended.control.SearchEngine({ zoomTo: 12 });
       map.addControl(search);
 
-      var layerSwitcher = new olExtended.control.LayerSwitcher({
-        reverse: true,
-        groupSelectStyle: "group",
-      });
-      map.addControl(layerSwitcher);
 
       // code qui permet de supprimer les couches du gestionnaire de couche
       // on recupere les layers dans la couche du ggestionnaire
@@ -891,10 +886,10 @@ class App extends Component {
 
           const [firstResponse, secondResponse] = await Promise.all([
             axios.get(
-              `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
+              `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=IGNF_LIDAR-HD_TA:nuage-dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`
             ),
             axios.get(
-              `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=ta_lidar-hd:dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`.concat(
+              `https://data.geopf.fr/private/wfs/?service=WFS&version=2.0.0&apikey=interface_catalogue&request=GetFeature&typeNames=IGNF_LIDAR-HD_TA:nuage-dalle&outputFormat=application/json&bbox=${minX},${minY},${maxX},${maxY}`.concat(
                 "&count=5000&startIndex=5000"
               )
             ),
@@ -1220,7 +1215,7 @@ class App extends Component {
                     <ul>
                       <li>
                         Cette interface vous permet de récupérer la liste des
-                        données vous intéressent.
+                        données qui vous intéressent.
                       </li>
                       <li>
                         Pour récupérer les données facilement, il faudra
